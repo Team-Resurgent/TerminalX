@@ -170,6 +170,12 @@
 				RelativePath=".\Drawing.h">
 			</File>
 			<File
+				RelativePath=".\DriveMount.cpp">
+			</File>
+			<File
+				RelativePath=".\DriveMount.h">
+			</File>
+			<File
 				RelativePath=".\External.h">
 			</File>
 			<File
@@ -195,6 +201,12 @@
 			</File>
 			<File
 				RelativePath=".\ssfn.h">
+			</File>
+			<File
+				RelativePath=".\String.cpp">
+			</File>
+			<File
+				RelativePath=".\String.h">
 			</File>
 			<File
 				RelativePath=".\TerminalBuffer.cpp">

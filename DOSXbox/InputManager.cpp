@@ -1,6 +1,7 @@
 #include "InputManager.h"
 #include "Drawing.h"
 #include "Math.h"
+#include "String.h"
 
 extern "C" 
 {
@@ -90,6 +91,8 @@ namespace
 
     HANDLE mKeyboardHandles[XGetPortCount()];
     KeyboardState mKeyboardState;
+
+    CHAR mMemoryUnityHandles[XGetPortCount() * 2];
 }
 
 void InputManager::Init()
@@ -125,6 +128,8 @@ void InputManager::Init()
     keyboardSettings.dwRepeatDelay = 500;
     keyboardSettings.dwRepeatInterval = 50;
     XInputDebugInitKeyboardQueue(&keyboardSettings);
+
+    memset(&mMemoryUnityHandles, 0, sizeof(mMemoryUnityHandles));
 }
 
 void InputManager::ProcessController()
@@ -402,6 +407,48 @@ void InputManager::ProcessKeyboard()
     }
 }
 
+void InputManager::ProcessMemoryUnit()
+{
+    DWORD insertions = 0;
+	DWORD removals = 0;
+    if (XGetDeviceChanges(XDEVICE_TYPE_MEMORY_UNIT, &insertions, &removals) == TRUE) {
+        for (uint32_t iPort = 0; iPort < XGetPortCount(); iPort++) {
+            for (uint32_t iSlot = 0; iSlot < 2; iSlot++) {
+                uint32_t mask = iPort + (iSlot ? 16 : 0);
+                mask = 1 << mask;
+
+                uint32_t index = (iPort * 2) + iSlot;
+                if ((mask & removals) != 0 && mMemoryUnityHandles[index] != 0) {
+                    const char* mountPoint = String::Format("\\??\\%c:", 'H' + index).c_str();
+                    STRING sMountPoint = {(USHORT)strlen(mountPoint), (USHORT)strlen(mountPoint) + 1, (char*)mountPoint};
+
+                    DEVICE_OBJECT* device = MU_GetExistingDeviceObject(iPort, iSlot);
+                    IoDismountVolume(device);
+
+                    IoDeleteSymbolicLink(&sMountPoint);
+
+                    MU_CloseDeviceObject(iPort, iSlot);
+                    mMemoryUnityHandles[index] = 0;
+                }
+
+                if ((mask & insertions) != 0 && mMemoryUnityHandles[index] == 0) {
+                    char szDeviceName[64];
+                    STRING DeviceName;
+                    DeviceName.Length = 0;
+                    DeviceName.MaximumLength = sizeof(szDeviceName) / sizeof(CHAR) - 2;
+                    DeviceName.Buffer = szDeviceName;
+                    if (MU_CreateDeviceObject(iPort, iSlot, &DeviceName) >= 0) {
+                        const char* mountPoint = String::Format("\\??\\%c:", 'H' + index).c_str();
+                        STRING sMountPoint = {(USHORT)strlen(mountPoint), (USHORT)strlen(mountPoint) + 1, (char*)mountPoint};
+                        IoCreateSymbolicLink(&sMountPoint, &DeviceName);
+                        mMemoryUnityHandles[index] = (char)('H' + index);
+                    }
+                }
+            }
+        }
+    }
+}
+
 bool InputManager::ControllerPressed(ControllerButton button, int port)
 {
 	for (int i = 0; i < XGetPortCount(); i++)
@@ -557,12 +604,22 @@ bool InputManager::HasMouse(int port)
 	return false;
 }
 
+bool InputManager::IsMemoryUnitMounted(char letter) {
+    for (int i = 0; i < XGetPortCount() * 2; i++) {
+        if (mMemoryUnityHandles[i] == letter) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void InputManager::PumpInput()
 {
     ProcessController();
     ProcessRemote(); 
     ProcessMouse();
     ProcessKeyboard();
+    ProcessMemoryUnit();
 }
 
 MousePosition InputManager::GetMousePosition()

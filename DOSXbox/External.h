@@ -6,6 +6,8 @@
 #define FILE_SYNCHRONOUS_IO_NONALERT 0x00000020
 #define FILE_NON_DIRECTORY_FILE 0x00000040
 #define OBJ_CASE_INSENSITIVE 0x00000040L
+#define SMC_TRAY_STATE_MEDIA_DETECT 1
+#define STATUS_SUCCESS 0
 
 typedef LONG NTSTATUS;
 
@@ -83,6 +85,19 @@ typedef enum FILE_INFORMATION_CLASS
 	FileMaximumInformation
 } FILE_INFORMATION_CLASS;
 
+typedef struct DRIVER_OBJECT {
+    const int16_t Type;
+    const int16_t Size;
+    struct DEVICE_OBJECT* DeviceObject;
+} DRIVER_OBJECT;
+
+typedef struct DEVICE_OBJECT {
+    const int16_t Type;
+    const uint16_t Size;
+    int32_t ReferenceCount;
+    DRIVER_OBJECT* DriverObject;
+} DEVICE_OBJECT;
+
 extern "C" {
 
     NTSTATUS WINAPI NtClose(HANDLE Handle);
@@ -113,10 +128,19 @@ extern "C" {
 	);
 
     extern STRING* XeImageFileName;
-    VOID WINAPI HalReturnToFirmware(unsigned int value);
+    VOID WINAPI HalReturnToFirmware(ULONG value);
     NTSTATUS WINAPI HalWriteSMBusValue(UCHAR devddress, UCHAR offset, UCHAR writedw, DWORD data);
     NTSTATUS WINAPI HalReadSMBusValue(UCHAR devddress, UCHAR offset, UCHAR readdw, DWORD* pdata);
+    NTSTATUS WINAPI HalReadSMCTrayState(ULONG* TrayState, ULONG* EjectCount);
 
+    LONG WINAPI IoCreateSymbolicLink(STRING*, STRING*);
+    LONG WINAPI IoDeleteSymbolicLink(STRING*);
+    LONG WINAPI IoDismountVolumeByName(STRING*);
+    LONG WINAPI IoDismountVolume(DEVICE_OBJECT*);
+
+    NTSTATUS WINAPI MU_CreateDeviceObject(uint32_t port, uint32_t slot, STRING* deviceName);
+    VOID WINAPI MU_CloseDeviceObject(uint32_t port, uint32_t slot);
+    DEVICE_OBJECT* WINAPI MU_GetExistingDeviceObject(uint32_t port, uint32_t slot);
 }
 
 #define HalReadSMBusByte(SlaveAddress, CommandCode, DataValue)                                                         \

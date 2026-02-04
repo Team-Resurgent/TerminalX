@@ -133,6 +133,7 @@ public:
     static void ProcessRemote();
     static void ProcessMouse();
     static void ProcessKeyboard();
+    static void ProcessMemoryUnit();
     static bool ControllerPressed(ControllerButton button, int port);
     static bool RemotePressed(RemoteButton button, int port);
     static bool MousePressed(MouseButton button, int port);
@@ -143,6 +144,7 @@ public:
     static bool HasController(int port);
     static bool HasRemote(int port);
     static bool HasMouse(int port);
+    static bool IsMemoryUnitMounted(char letter);
     static void PumpInput();
     static MousePosition GetMousePosition();
 };
