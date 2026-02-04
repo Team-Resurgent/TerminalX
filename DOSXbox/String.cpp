@@ -65,3 +65,26 @@ int String::Compare(const std::string& a, const std::string& b, bool ignoreCase)
     }
     return CompareLoop(a, b);
 }
+
+std::string String::FormatBytesWithCommas(uint64_t n)
+{
+    if (n == 0)
+    {
+        return "0";
+    }
+    std::string s;
+    while (n != 0)
+    {
+        unsigned int group = (unsigned int)(n % 1000);
+        n /= 1000;
+        if (n != 0)
+        {
+            s = Format(",%03u", group) + s;
+        }
+        else
+        {
+            s = Format("%u", group) + s;
+        }
+    }
+    return s;
+}

@@ -281,7 +281,7 @@ void __cdecl main()
         bool cursorOn = (tick % (CURSOR_BLINK_MS * 2)) < CURSOR_BLINK_MS;
         int curX = TerminalBuffer::GetInputCursorX();
         int curY = TerminalBuffer::GetInputCursorY();
-        Drawing::DrawTerminal(TerminalBuffer::GetBuffer(), 0xff00ff00, curX, curY, cursorOn);
+        Drawing::DrawTerminal(TerminalBuffer::GetBuffer(), TerminalBuffer::GetTextColor(), curX, curY, cursorOn);
         Sleep(0);
     }
 

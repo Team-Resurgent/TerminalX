@@ -34,4 +34,11 @@ public:
     static void UpdateInputRow();
     static int GetInputCursorX();
     static int GetInputCursorY();
+
+    /* COLOR command: attribute byte (high nibble = background, low = foreground), default 0x0A */
+    static void SetColorAttribute(unsigned char attr);
+    static void ResetColorAttribute();
+    static unsigned char GetColorAttribute();
+    static unsigned int GetTextColor();
+    static unsigned int GetBackgroundColor();
 };

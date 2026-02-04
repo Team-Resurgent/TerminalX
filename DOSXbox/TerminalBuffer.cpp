@@ -8,6 +8,41 @@ namespace
     int s_cursor_y = 0;
     std::string s_prompt = "C:\\> ";
     std::string s_inputLine;
+    unsigned char s_colorAttr = 0x0A;
+    unsigned char s_colorAttrDefault = 0x0A;
+
+    static const unsigned int s_colorTable[16] =
+    {
+        0xFF000000, 0xFF0000AA, 0xFF00AA00, 0xFF00AAAA,
+        0xFFAA0000, 0xFFAA00AA, 0xFFAAAA00, 0xFFAAAAAA,
+        0xFF555555, 0xFF5555FF, 0xFF55FF55, 0xFF55FFFF,
+        0xFFFF5555, 0xFFFF55FF, 0xFFFFFF55, 0xFFFFFFFF
+    };
+}
+
+void TerminalBuffer::SetColorAttribute(unsigned char attr)
+{
+    s_colorAttr = attr;
+}
+
+void TerminalBuffer::ResetColorAttribute()
+{
+    s_colorAttr = s_colorAttrDefault;
+}
+
+unsigned char TerminalBuffer::GetColorAttribute()
+{
+    return s_colorAttr;
+}
+
+unsigned int TerminalBuffer::GetTextColor()
+{
+    return s_colorTable[s_colorAttr & 0x0F];
+}
+
+unsigned int TerminalBuffer::GetBackgroundColor()
+{
+    return s_colorTable[(s_colorAttr >> 4) & 0x0F];
 }
 
 void TerminalBuffer::Init()

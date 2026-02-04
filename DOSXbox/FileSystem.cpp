@@ -258,11 +258,12 @@ std::string FileSystem::ListDirectory(const std::string& path, const DirOptions&
             {
                 fileCount++;
                 totalBytes += e.size;
-                std::string sizeStr;
-                if (e.size >> 32 == 0)
-                    sizeStr = String::Format("%16u ", (unsigned)e.size);
-                else
-                    sizeStr = String::Format("%u%09u ", (unsigned)(e.size >> 32), (unsigned)(e.size & 0xFFFFFFFF));
+                std::string sizeStr = String::FormatBytesWithCommas((uint64_t)e.size);
+                while (sizeStr.length() < 16)
+                {
+                    sizeStr = " " + sizeStr;
+                }
+                sizeStr += " ";
                 out += FormatFileTime(e.lastWriteTime) + " " + sizeStr + e.name + "\n";
             }
             entryLineCount++;
@@ -278,23 +279,14 @@ std::string FileSystem::ListDirectory(const std::string& path, const DirOptions&
     if (GetDiskFreeSpaceExA(apiPath.c_str(), &freeToCaller, &totalDisk, &freeBytes))
     {
         out += String::Format("               %d File(s) ", fileCount);
-        if ((totalBytes >> 32) == 0)
-            out += String::Format("%u bytes\n", (unsigned)totalBytes);
-        else
-            out += String::Format("%u%09u bytes\n", (unsigned)(totalBytes >> 32), (unsigned)(totalBytes & 0xFFFFFFFF));
+        out += String::FormatBytesWithCommas((uint64_t)totalBytes) + " bytes\n";
         out += String::Format("               %d Dir(s)  ", dirCount);
-        if (freeBytes.QuadPart >> 32)
-            out += String::Format("%u%09u bytes free\n", (unsigned)(freeBytes.QuadPart >> 32), (unsigned)(freeBytes.QuadPart & 0xFFFFFFFF));
-        else
-            out += String::Format("%u bytes free\n", (unsigned)freeBytes.QuadPart);
+        out += String::FormatBytesWithCommas((uint64_t)freeBytes.QuadPart) + " bytes free\n";
     }
     else
     {
         out += String::Format("               %d File(s) ", fileCount);
-        if ((totalBytes >> 32) == 0)
-            out += String::Format("%u bytes\n", (unsigned)totalBytes);
-        else
-            out += String::Format("%u%09u bytes\n", (unsigned)(totalBytes >> 32), (unsigned)(totalBytes & 0xFFFFFFFF));
+        out += String::FormatBytesWithCommas((uint64_t)totalBytes) + " bytes\n";
         out += String::Format("               %d Dir(s)\n", dirCount);
     }
     return out;

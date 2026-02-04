@@ -15,6 +15,7 @@ std::string HelpCommand::Execute(const std::vector<std::string>& args, CommandCo
            "DIR    Displays a list of files and subdirectories in a directory.\n"
            "CD     Displays the name of or changes the current directory.\n"
            "CLS    Clears the screen.\n"
+           "COLOR  Sets the default console foreground and background colors.\n"
            "VER    Displays the Windows version.\n"
            "HELP   Provides Help information for Windows commands.\n"
            "EXIT   Quits the command interpreter.\n";

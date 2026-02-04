@@ -1,4 +1,5 @@
 #include "DirCommand.h"
+#include "..\DriveMount.h"
 #include "..\FileSystem.h"
 #include "..\String.h"
 #include <string>
@@ -95,12 +96,30 @@ std::string DirCommand::Execute(const std::vector<std::string>& args, CommandCon
     std::string path = ctx.currentDir;
     if (!pathArg.empty())
     {
-        if (pathArg.length() >= 2 && pathArg[1] == ':')
+        size_t colon = pathArg.find(':');
+        if (colon != std::string::npos)
         {
-            path = pathArg.substr(0, pathArg.find(':'));
-            if (path.length() > 0 && path[path.length() - 1] != '\\')
+            std::string drivePart = String::ToUpper(pathArg.substr(0, colon));
+            std::string pathPart = pathArg.substr(colon + 1);
+            while (!pathPart.empty() && (pathPart[0] == '\\' || pathPart[0] == '/'))
             {
-                path += "\\";
+                pathPart.erase(0, 1);
+            }
+            if (!drivePart.empty())
+            {
+                if (!DriveMount::Mount(drivePart.c_str()))
+                {
+                    return "The system cannot find the drive specified.\n";
+                }
+                path = drivePart + "\\";
+                if (!pathPart.empty() && pathPart != "." && pathPart != "..")
+                {
+                    path += pathPart;
+                    if (path[path.length() - 1] != '\\')
+                    {
+                        path += "\\";
+                    }
+                }
             }
         }
         else if (pathArg != "." && pathArg != "..")

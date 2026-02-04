@@ -236,6 +236,12 @@
 					RelativePath=".\Commands\ClsCommand.h">
 				</File>
 				<File
+					RelativePath=".\Commands\ColorCommand.cpp">
+				</File>
+				<File
+					RelativePath=".\Commands\ColorCommand.h">
+				</File>
+				<File
 					RelativePath=".\Commands\CommandContext.h">
 				</File>
 				<File

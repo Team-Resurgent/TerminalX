@@ -340,7 +340,7 @@ void Drawing::DrawTerminal(const char* buffer, uint32_t color, int cursorX, int 
     }
 
     mD3dDevice->BeginScene();
-    mD3dDevice->Clear(0L, NULL, D3DCLEAR_TARGET|D3DCLEAR_ZBUFFER|D3DCLEAR_STENCIL, 0xff000000, 1.0f, 0L);
+    mD3dDevice->Clear(0L, NULL, D3DCLEAR_TARGET|D3DCLEAR_ZBUFFER|D3DCLEAR_STENCIL, TerminalBuffer::GetBackgroundColor(), 1.0f, 0L);
 
     if (nVerts > 0)
     {

@@ -1,6 +1,7 @@
 #include "CommandProcessor.h"
 #include "Commands\CommandContext.h"
 #include "Commands\ClsCommand.h"
+#include "Commands\ColorCommand.h"
 #include "Commands\VerCommand.h"
 #include "Commands\HelpCommand.h"
 #include "Commands\DirCommand.h"
@@ -75,6 +76,10 @@ std::string CommandProcessor::Execute(const std::vector<std::string>& args)
     if (ClsCommand::Matches(cmd))
     {
         return ClsCommand::Execute(args, ctx);
+    }
+    if (ColorCommand::Matches(cmd))
+    {
+        return ColorCommand::Execute(args, ctx);
     }
     if (VerCommand::Matches(cmd))
     {
