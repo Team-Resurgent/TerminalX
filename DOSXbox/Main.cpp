@@ -176,7 +176,7 @@ bool CreateDevice()
     params.BackBufferCount = 1;
     params.EnableAutoDepthStencil = FALSE;
 	params.SwapEffect = D3DSWAPEFFECT_DISCARD;
-    params.FullScreen_PresentationInterval = D3DPRESENT_INTERVAL_DEFAULT;
+    params.FullScreen_PresentationInterval = D3DPRESENT_INTERVAL_ONE;
 
 	LPDIRECT3DDEVICE8 d3dDevice;
     if (FAILED(d3d->CreateDevice(0, D3DDEVTYPE_HAL, NULL, D3DCREATE_HARDWARE_VERTEXPROCESSING, &params, &d3dDevice)))
@@ -282,6 +282,7 @@ void __cdecl main()
         int curX = TerminalBuffer::GetInputCursorX();
         int curY = TerminalBuffer::GetInputCursorY();
         Drawing::DrawTerminal(TerminalBuffer::GetBuffer(), 0xff00ff00, curX, curY, cursorOn);
+        Sleep(0);
     }
 
     HalReturnToFirmware(2);

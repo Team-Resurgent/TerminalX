@@ -43,6 +43,7 @@ namespace
     static DWORD s_bufferHeight;
 
     std::map<uint32_t, recti> charMap;
+    recti s_charRects[256];
 
     int texture_width;
     int texture_height;
@@ -243,6 +244,15 @@ void Drawing::GenerateBitmapFont()
 		free(currentChar);
 	}
 
+	for (int i = 0; i < 256; i++)
+	{
+		std::map<uint32_t, recti>::iterator it = charMap.find((uint32_t)i);
+		if (it != charMap.end())
+			s_charRects[i] = it->second;
+		else
+			s_charRects[i].x = s_charRects[i].y = s_charRects[i].width = s_charRects[i].height = 0;
+	}
+
 	CreateImage((uint8_t*)imageData, D3DFMT_A8R8G8B8, textureWidth, textureHeight);
 	free(imageData);
 }
@@ -273,14 +283,10 @@ void Drawing::DrawTerminal(const char* buffer, uint32_t color, int cursorX, int 
     {
         for (int col = 0; col < cols; col++)
         {
-            char c = buffer[(row * cols) + col];
-            std::map<uint32_t, recti>::iterator it = charMap.find((uint32_t)(unsigned char)c);
-            if (it == charMap.end())
-            {
+            unsigned char uc = (unsigned char)buffer[(row * cols) + col];
+            const recti& r = s_charRects[uc];
+            if (r.width == 0 || r.height == 0)
                 continue;
-            }
-
-            const recti& r = it->second;
             float u0 = r.x * invDim;
             float v0 = r.y * invDim;
             float u1 = (r.x + r.width) * invDim;

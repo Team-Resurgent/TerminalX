@@ -221,6 +221,55 @@
 				RelativePath=".\TerminalBuffer.h">
 			</File>
 			<Filter
+				Name="Commands"
+				Filter="">
+				<File
+					RelativePath=".\Commands\CdCommand.cpp">
+				</File>
+				<File
+					RelativePath=".\Commands\CdCommand.h">
+				</File>
+				<File
+					RelativePath=".\Commands\ClsCommand.cpp">
+				</File>
+				<File
+					RelativePath=".\Commands\ClsCommand.h">
+				</File>
+				<File
+					RelativePath=".\Commands\CommandContext.h">
+				</File>
+				<File
+					RelativePath=".\Commands\DirCommand.cpp">
+				</File>
+				<File
+					RelativePath=".\Commands\DirCommand.h">
+				</File>
+				<File
+					RelativePath=".\Commands\DriveCommand.cpp">
+				</File>
+				<File
+					RelativePath=".\Commands\DriveCommand.h">
+				</File>
+				<File
+					RelativePath=".\Commands\ExitCommand.cpp">
+				</File>
+				<File
+					RelativePath=".\Commands\ExitCommand.h">
+				</File>
+				<File
+					RelativePath=".\Commands\HelpCommand.cpp">
+				</File>
+				<File
+					RelativePath=".\Commands\HelpCommand.h">
+				</File>
+				<File
+					RelativePath=".\Commands\VerCommand.cpp">
+				</File>
+				<File
+					RelativePath=".\Commands\VerCommand.h">
+				</File>
+			</Filter>
+			<Filter
 				Name="Assets"
 				Filter="">
 				<Filter
