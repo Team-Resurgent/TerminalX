@@ -316,7 +316,7 @@ bool FileSystem::Exists(const std::string& path)
     return (attrs != 0xFFFFFFFF);
 }
 
-std::string FileSystem::CreateDirectory(const std::string& path)
+std::string FileSystem::CreateDir(const std::string& path)
 {
     if (path.empty())
     {
@@ -378,7 +378,7 @@ std::string FileSystem::CreateDirectory(const std::string& path)
     return "";
 }
 
-static std::string RemoveDirectoryRecursive(const std::string& apiPath)
+static std::string RemoveDirRecursive(const std::string& apiPath)
 {
     std::string searchPath = apiPath;
     if (searchPath.length() > 0 && searchPath[searchPath.length() - 1] != '\\')
@@ -405,7 +405,7 @@ static std::string RemoveDirectoryRecursive(const std::string& apiPath)
             full += name;
             if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
             {
-                std::string err = RemoveDirectoryRecursive(full);
+                std::string err = RemoveDirRecursive(full);
                 if (!err.empty())
                 {
                     FindClose(h);
@@ -455,7 +455,7 @@ static std::string RemoveDirectoryRecursive(const std::string& apiPath)
     return "";
 }
 
-std::string FileSystem::RemoveDirectory(const std::string& path, bool removeTree)
+std::string FileSystem::RemoveDir(const std::string& path, bool removeTree)
 {
     if (path.empty())
     {
@@ -481,7 +481,7 @@ std::string FileSystem::RemoveDirectory(const std::string& path, bool removeTree
     }
     if (removeTree)
     {
-        return RemoveDirectoryRecursive(apiPath);
+        return RemoveDirRecursive(apiPath);
     }
     if (!RemoveDirectoryA(apiPath.c_str()))
     {

@@ -69,5 +69,5 @@ std::string MkdirCommand::Execute(const std::vector<std::string>& args, CommandC
     {
         return "The syntax of the command is incorrect.\n";
     }
-    return FileSystem::CreateDirectory(path);
+    return FileSystem::CreateDir(path);
 }

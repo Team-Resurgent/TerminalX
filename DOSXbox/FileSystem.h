@@ -33,8 +33,8 @@ public:
     static bool Exists(const std::string& path);
 
     /** Create directory and any intermediate directories; returns empty on success, error message otherwise */
-    static std::string CreateDirectory(const std::string& path);
+    static std::string CreateDir(const std::string& path);
 
     /** Remove directory; if removeTree true, delete contents recursively (/S). Returns empty on success, error message otherwise */
-    static std::string RemoveDirectory(const std::string& path, bool removeTree);
+    static std::string RemoveDir(const std::string& path, bool removeTree);
 };

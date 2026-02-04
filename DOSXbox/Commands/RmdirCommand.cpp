@@ -97,5 +97,5 @@ std::string RmdirCommand::Execute(const std::vector<std::string>& args, CommandC
     {
         return "The syntax of the command is incorrect.\n";
     }
-    return FileSystem::RemoveDirectory(path, removeTree);
+    return FileSystem::RemoveDir(path, removeTree);
 }
