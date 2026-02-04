@@ -1,4 +1,5 @@
 #include "CommandProcessor.h"
+#include "DriveMount.h"
 #include <algorithm>
 #include <cctype>
 
@@ -101,6 +102,8 @@ std::string CommandProcessor::Execute(const std::vector<std::string>& args)
         }
         else if (path.length() >= 2 && path[1] == ':')
         {
+            std::string driveName = path.substr(0, path.find(':'));
+            DriveMount::Mount(driveName.c_str());
             s_currentDir = path;
             if (s_currentDir[s_currentDir.length() - 1] != '\\')
                 s_currentDir += '\\';
@@ -118,6 +121,25 @@ std::string CommandProcessor::Execute(const std::vector<std::string>& args)
     if (cmd == "EXIT")
     {
         return "\x02EXIT";  /* special: caller exits app */
+    }
+    /* Drive change: e.g. HDD0-E: or H: */
+    if (args.size() == 1 && args[0].length() >= 1 && args[0][args[0].length() - 1] == ':')
+    {
+        std::string driveName = args[0].substr(0, args[0].length() - 1);
+        if (driveName.empty())
+        {
+            return "The system cannot find the drive specified.\n";
+        }
+        if (!DriveMount::Mount(driveName.c_str()))
+        {
+            return "The system cannot find the drive specified.\n";
+        }
+        s_currentDir = ToUpper(driveName);
+        if (s_currentDir[s_currentDir.length() - 1] != '\\')
+        {
+            s_currentDir += "\\";
+        }
+        return "";
     }
     return "Bad command or file name - " + args[0] + "\n";
 }
