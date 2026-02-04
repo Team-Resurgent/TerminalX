@@ -19,54 +19,55 @@ struct DriveEntry
     std::string name;
     DriveKind kind;
     std::string devicePath;
+    bool mounted;
 };
 
 typedef std::map<std::string, DriveEntry> DriveMap;
 
-static const DriveMap& GetDrives()
+static DriveMap& GetDrives()
 {
     static DriveMap s_drives;
     if (s_drives.empty())
     {
         static const DriveEntry s_table[] =
         {
-            { "DVD-ROM",     DriveKindCdRom, "\\Device\\Cdrom0" },
-            { "HDD0-C",      DriveKindHdd,   "\\Device\\Harddisk0\\Partition2" },
-            { "HDD0-E",      DriveKindHdd,   "\\Device\\Harddisk0\\Partition1" },
-            { "HDD0-F",      DriveKindHdd,   "\\Device\\Harddisk0\\Partition6" },
-            { "HDD0-G",      DriveKindHdd,   "\\Device\\Harddisk0\\Partition7" },
-            { "HDD0-H",      DriveKindHdd,   "\\Device\\Harddisk0\\Partition8" },
-            { "HDD0-I",      DriveKindHdd,   "\\Device\\Harddisk0\\Partition9" },
-            { "HDD0-J",      DriveKindHdd,   "\\Device\\Harddisk0\\Partition10" },
-            { "HDD0-K",      DriveKindHdd,   "\\Device\\Harddisk0\\Partition11" },
-            { "HDD0-L",      DriveKindHdd,   "\\Device\\Harddisk0\\Partition12" },
-            { "HDD0-M",      DriveKindHdd,   "\\Device\\Harddisk0\\Partition13" },
-            { "HDD0-N",      DriveKindHdd,   "\\Device\\Harddisk0\\Partition14" },
-            { "HDD0-X",      DriveKindHdd,   "\\Device\\Harddisk0\\Partition3" },
-            { "HDD0-Y",      DriveKindHdd,   "\\Device\\Harddisk0\\Partition4" },
-            { "HDD0-Z",      DriveKindHdd,   "\\Device\\Harddisk0\\Partition5" },
-            { "HDD1-C",      DriveKindHdd,   "\\Device\\Harddisk1\\Partition2" },
-            { "HDD1-E",      DriveKindHdd,   "\\Device\\Harddisk1\\Partition1" },
-            { "HDD1-F",      DriveKindHdd,   "\\Device\\Harddisk1\\Partition6" },
-            { "HDD1-G",      DriveKindHdd,   "\\Device\\Harddisk1\\Partition7" },
-            { "HDD1-H",      DriveKindHdd,   "\\Device\\Harddisk1\\Partition8" },
-            { "HDD1-I",      DriveKindHdd,   "\\Device\\Harddisk1\\Partition9" },
-            { "HDD1-J",      DriveKindHdd,   "\\Device\\Harddisk1\\Partition10" },
-            { "HDD1-K",      DriveKindHdd,   "\\Device\\Harddisk1\\Partition11" },
-            { "HDD1-L",      DriveKindHdd,   "\\Device\\Harddisk1\\Partition12" },
-            { "HDD1-M",      DriveKindHdd,   "\\Device\\Harddisk1\\Partition13" },
-            { "HDD1-N",      DriveKindHdd,   "\\Device\\Harddisk1\\Partition14" },
-            { "HDD1-X",      DriveKindHdd,   "\\Device\\Harddisk1\\Partition3" },
-            { "HDD1-Y",      DriveKindHdd,   "\\Device\\Harddisk1\\Partition4" },
-            { "HDD1-Z",      DriveKindHdd,   "\\Device\\Harddisk1\\Partition5" },
-            { "MMU0",        DriveKindMemoryUnit, "H" },
-            { "MMU1",        DriveKindMemoryUnit, "I" },
-            { "MMU2",        DriveKindMemoryUnit, "J" },
-            { "MMU3",        DriveKindMemoryUnit, "K" },
-            { "MMU4",        DriveKindMemoryUnit, "L" },
-            { "MMU5",        DriveKindMemoryUnit, "M" },
-            { "MMU6",        DriveKindMemoryUnit, "N" },
-            { "MMU7",        DriveKindMemoryUnit, "O" },
+            { "DVD-ROM",     DriveKindCdRom, "\\Device\\Cdrom0", false },
+            { "HDD0-C",      DriveKindHdd,   "\\Device\\Harddisk0\\Partition2", false },
+            { "HDD0-E",      DriveKindHdd,   "\\Device\\Harddisk0\\Partition1", false },
+            { "HDD0-F",      DriveKindHdd,   "\\Device\\Harddisk0\\Partition6", false },
+            { "HDD0-G",      DriveKindHdd,   "\\Device\\Harddisk0\\Partition7", false },
+            { "HDD0-H",      DriveKindHdd,   "\\Device\\Harddisk0\\Partition8", false },
+            { "HDD0-I",      DriveKindHdd,   "\\Device\\Harddisk0\\Partition9", false },
+            { "HDD0-J",      DriveKindHdd,   "\\Device\\Harddisk0\\Partition10", false },
+            { "HDD0-K",      DriveKindHdd,   "\\Device\\Harddisk0\\Partition11", false },
+            { "HDD0-L",      DriveKindHdd,   "\\Device\\Harddisk0\\Partition12", false },
+            { "HDD0-M",      DriveKindHdd,   "\\Device\\Harddisk0\\Partition13", false },
+            { "HDD0-N",      DriveKindHdd,   "\\Device\\Harddisk0\\Partition14", false },
+            { "HDD0-X",      DriveKindHdd,   "\\Device\\Harddisk0\\Partition3", false },
+            { "HDD0-Y",      DriveKindHdd,   "\\Device\\Harddisk0\\Partition4", false },
+            { "HDD0-Z",      DriveKindHdd,   "\\Device\\Harddisk0\\Partition5", false },
+            { "HDD1-C",      DriveKindHdd,   "\\Device\\Harddisk1\\Partition2", false },
+            { "HDD1-E",      DriveKindHdd,   "\\Device\\Harddisk1\\Partition1", false },
+            { "HDD1-F",      DriveKindHdd,   "\\Device\\Harddisk1\\Partition6", false },
+            { "HDD1-G",      DriveKindHdd,   "\\Device\\Harddisk1\\Partition7", false },
+            { "HDD1-H",      DriveKindHdd,   "\\Device\\Harddisk1\\Partition8", false },
+            { "HDD1-I",      DriveKindHdd,   "\\Device\\Harddisk1\\Partition9", false },
+            { "HDD1-J",      DriveKindHdd,   "\\Device\\Harddisk1\\Partition10", false },
+            { "HDD1-K",      DriveKindHdd,   "\\Device\\Harddisk1\\Partition11", false },
+            { "HDD1-L",      DriveKindHdd,   "\\Device\\Harddisk1\\Partition12", false },
+            { "HDD1-M",      DriveKindHdd,   "\\Device\\Harddisk1\\Partition13", false },
+            { "HDD1-N",      DriveKindHdd,   "\\Device\\Harddisk1\\Partition14", false },
+            { "HDD1-X",      DriveKindHdd,   "\\Device\\Harddisk1\\Partition3", false },
+            { "HDD1-Y",      DriveKindHdd,   "\\Device\\Harddisk1\\Partition4", false },
+            { "HDD1-Z",      DriveKindHdd,   "\\Device\\Harddisk1\\Partition5", false },
+            { "MMU0",        DriveKindMemoryUnit, "H", false },
+            { "MMU1",        DriveKindMemoryUnit, "I", false },
+            { "MMU2",        DriveKindMemoryUnit, "J", false },
+            { "MMU3",        DriveKindMemoryUnit, "K", false },
+            { "MMU4",        DriveKindMemoryUnit, "L", false },
+            { "MMU5",        DriveKindMemoryUnit, "M", false },
+            { "MMU6",        DriveKindMemoryUnit, "N", false },
+            { "MMU7",        DriveKindMemoryUnit, "O", false },
         };
         for (size_t i = 0; i < sizeof(s_table) / sizeof(s_table[0]); i++)
         {
@@ -86,15 +87,15 @@ static std::string NormalizeDriveName(const std::string& driveName)
     return key;
 }
 
-static const DriveEntry* FindDrive(const std::string& driveName)
+static DriveEntry* FindDrive(const std::string& driveName)
 {
     if (driveName.empty())
     {
         return NULL;
     }
-    const DriveMap& drives = GetDrives();
+    DriveMap& drives = GetDrives();
     std::string key = NormalizeDriveName(driveName);
-    DriveMap::const_iterator it = drives.find(key);
+    DriveMap::iterator it = drives.find(key);
     if (it == drives.end())
     {
         return NULL;
@@ -102,7 +103,7 @@ static const DriveEntry* FindDrive(const std::string& driveName)
     return &it->second;
 }
 
-static bool DoUnmount(const DriveEntry* ent)
+static bool DoUnmount(DriveEntry* ent)
 {
     if (ent->kind == DriveKindMemoryUnit)
     {
@@ -129,10 +130,14 @@ static bool DoUnmount(const DriveEntry* ent)
     {
         r |= IoDismountVolumeByName(&sDevice);
     }
+    if (r == STATUS_SUCCESS && ent->kind == DriveKindHdd)
+    {
+        ent->mounted = false;
+    }
     return (r == STATUS_SUCCESS);
 }
 
-static bool DoMount(const DriveEntry* ent)
+static bool DoMount(DriveEntry* ent)
 {
     if (ent->kind == DriveKindMemoryUnit)
     {
@@ -154,13 +159,21 @@ static bool DoMount(const DriveEntry* ent)
         return false;
     }
 
-    size_t deviceLen = ent->devicePath.length();
-    STRING sSymlink = { (USHORT)symlink.length(), (USHORT)symlink.length() + 1, (PSTR)symlink.c_str() };
-    STRING sDevice  = { (USHORT)deviceLen, (USHORT)deviceLen + 1, (PSTR)ent->devicePath.c_str() };
+    const bool alreadyMountedHdd = (ent->kind == DriveKindHdd && ent->mounted);
 
-    if (IoCreateSymbolicLink(&sSymlink, &sDevice) != STATUS_SUCCESS)
+    if (!alreadyMountedHdd)
     {
-        return false;
+        size_t deviceLen = ent->devicePath.length();
+        STRING sSymlink = { (USHORT)symlink.length(), (USHORT)symlink.length() + 1, (PSTR)symlink.c_str() };
+        STRING sDevice  = { (USHORT)deviceLen, (USHORT)deviceLen + 1, (PSTR)ent->devicePath.c_str() };
+        if (IoCreateSymbolicLink(&sSymlink, &sDevice) != STATUS_SUCCESS)
+        {
+            return false;
+        }
+        if (ent->kind == DriveKindHdd)
+        {
+            ent->mounted = true;
+        }
     }
 
     if (ent->kind == DriveKindCdRom)
@@ -181,7 +194,7 @@ static bool DoMount(const DriveEntry* ent)
 
 bool DriveMount::Mount(std::string driveName)
 {
-    const DriveEntry* ent = FindDrive(driveName);
+    DriveEntry* ent = FindDrive(driveName);
     if (ent == NULL)
     {
         return false;
@@ -191,7 +204,7 @@ bool DriveMount::Mount(std::string driveName)
 
 bool DriveMount::Unmount(std::string driveName)
 {
-    const DriveEntry* ent = FindDrive(driveName);
+    DriveEntry* ent = FindDrive(driveName);
     if (ent == NULL)
     {
         return false;

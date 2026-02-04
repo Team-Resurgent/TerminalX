@@ -123,7 +123,7 @@ void InputManager::Init()
     memset(&mKeyboardState, 0, sizeof(mKeyboardState));
 
     XINPUT_DEBUG_KEYQUEUE_PARAMETERS keyboardSettings;
-    keyboardSettings.dwFlags = XINPUT_DEBUG_KEYQUEUE_FLAG_KEYDOWN | XINPUT_DEBUG_KEYQUEUE_FLAG_KEYREPEAT | XINPUT_DEBUG_KEYQUEUE_FLAG_KEYUP;
+    keyboardSettings.dwFlags = XINPUT_DEBUG_KEYQUEUE_FLAG_KEYDOWN | XINPUT_DEBUG_KEYQUEUE_FLAG_KEYUP;
     keyboardSettings.dwQueueSize = 25;
     keyboardSettings.dwRepeatDelay = 500;
     keyboardSettings.dwRepeatInterval = 50;
@@ -384,26 +384,33 @@ void InputManager::ProcessKeyboard()
 		}
 	}
 
-    
-    mKeyboardState.KeyDown = false; 
+    mKeyboardState.KeyDown = false;
+#ifndef XINPUT_DEBUG_KEYSTROKE_FLAG_REPEAT
+#define XINPUT_DEBUG_KEYSTROKE_FLAG_REPEAT 0x02
+#endif
     for (int i = 0; i < XGetPortCount(); i++)
-	{
+    {
+        if (mKeyboardHandles[i] == NULL)
+            continue;
         XINPUT_DEBUG_KEYSTROKE currentKeyStroke;
         memset(&currentKeyStroke, 0, sizeof(currentKeyStroke));
-		if (mKeyboardHandles[i] == NULL || XInputDebugGetKeystroke(&currentKeyStroke) != 0)
-        {
+        if (XInputDebugGetKeystroke(&currentKeyStroke) != 0)
             continue;
-        }
-
-        mKeyboardState.KeyDown = (currentKeyStroke.Flags & XINPUT_DEBUG_KEYSTROKE_FLAG_KEYUP) == 0 && currentKeyStroke.Ascii != 0 && currentKeyStroke.VirtualKey != 0;
+        const bool keyUp = (currentKeyStroke.Flags & XINPUT_DEBUG_KEYSTROKE_FLAG_KEYUP) != 0;
+        const bool repeat = (currentKeyStroke.Flags & XINPUT_DEBUG_KEYSTROKE_FLAG_REPEAT) != 0;
+        const bool validKey = currentKeyStroke.Ascii != 0 && currentKeyStroke.VirtualKey != 0;
+        if (keyUp || repeat || !validKey)
+            continue;
+        mKeyboardState.KeyDown = true;
         mKeyboardState.Ascii = currentKeyStroke.Ascii;
         mKeyboardState.VirtualKey = currentKeyStroke.VirtualKey;
-        mKeyboardState.Buttons[KeyboardCtrl] = (currentKeyStroke.Flags & XINPUT_DEBUG_KEYSTROKE_FLAG_CTRL) != 0;          
+        mKeyboardState.Buttons[KeyboardCtrl] = (currentKeyStroke.Flags & XINPUT_DEBUG_KEYSTROKE_FLAG_CTRL) != 0;
         mKeyboardState.Buttons[KeyboardShift] = (currentKeyStroke.Flags & XINPUT_DEBUG_KEYSTROKE_FLAG_SHIFT) != 0;
         mKeyboardState.Buttons[KeyboardAlt] = (currentKeyStroke.Flags & XINPUT_DEBUG_KEYSTROKE_FLAG_ALT) != 0;
         mKeyboardState.Buttons[KeyboardCapsLock] = (currentKeyStroke.Flags & XINPUT_DEBUG_KEYSTROKE_FLAG_CAPSLOCK) != 0;
         mKeyboardState.Buttons[KeyboardNumLock] = (currentKeyStroke.Flags & XINPUT_DEBUG_KEYSTROKE_FLAG_NUMLOCK) != 0;
         mKeyboardState.Buttons[KeyboardScrollLock] = (currentKeyStroke.Flags & XINPUT_DEBUG_KEYSTROKE_FLAG_SCROLLLOCK) != 0;
+        break;
     }
 }
 
