@@ -10,4 +10,5 @@ class CommandProcessor
 public:
     static std::vector<std::string> ParseLine(const std::string& line);
     static std::string Execute(const std::vector<std::string>& args);
+    static std::string GetCurrentDir();
 };

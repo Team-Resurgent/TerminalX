@@ -13,6 +13,7 @@
 #include "Resources.h"
 #include "TerminalBuffer.h"
 #include "CommandProcessor.h"
+#include "DriveMount.h"
 #include "ssfn.h"
 
 #include <xgraphics.h>
@@ -73,6 +74,7 @@ static void InitTerminalBuffer()
     TerminalBuffer::Write("DOSXbox\n");
     TerminalBuffer::Write("=======\n");
     TerminalBuffer::Write("Type HELP for commands.\n");
+    TerminalBuffer::SetPrompt(CommandProcessor::GetCurrentDir() + "> ");
     TerminalBuffer::SetCursor(0, TerminalBuffer::GetRows() - 1);
 }
 
@@ -106,6 +108,7 @@ static void SubmitCommand()
         TerminalBuffer::SetCursor(0, TerminalBuffer::GetRows() - 1);
         TerminalBuffer::Write(result);
     }
+    TerminalBuffer::SetPrompt(CommandProcessor::GetCurrentDir() + "> ");
     TerminalBuffer::SetCursor(0, TerminalBuffer::GetRows() - 1);
     TerminalBuffer::UpdateInputRow();
 }
@@ -228,7 +231,9 @@ void __cdecl main()
 	Drawing::GenerateBitmapFont();
 
     InputManager::Init();
-	
+
+    DriveMount::Mount("HDD0-E");
+
 	InitTerminalBuffer();
 
     bool exitRequested = false;

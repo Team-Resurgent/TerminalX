@@ -5,7 +5,7 @@
 
 namespace
 {
-    std::string s_currentDir = "C:\\";
+    std::string s_currentDir = "HDD0-E\\";
 }
 
 static std::string ToUpper(const std::string& s)
@@ -142,4 +142,9 @@ std::string CommandProcessor::Execute(const std::vector<std::string>& args)
         return "";
     }
     return "Bad command or file name - " + args[0] + "\n";
+}
+
+std::string CommandProcessor::GetCurrentDir()
+{
+    return s_currentDir;
 }
