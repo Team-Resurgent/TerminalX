@@ -24,6 +24,12 @@
 #ifndef INVALID_HANDLE_VALUE
 #define INVALID_HANDLE_VALUE ((HANDLE)(LONG_PTR)-1)
 #endif
+#ifndef ERROR_ALREADY_EXISTS
+#define ERROR_ALREADY_EXISTS 183
+#endif
+#ifndef ERROR_DIR_NOT_EMPTY
+#define ERROR_DIR_NOT_EMPTY 145
+#endif
 
 struct DirEntry
 {
@@ -308,4 +314,187 @@ bool FileSystem::Exists(const std::string& path)
     std::string apiPath = ToApiPath(path);
     DWORD attrs = GetFileAttributesA(apiPath.c_str());
     return (attrs != 0xFFFFFFFF);
+}
+
+std::string FileSystem::CreateDirectory(const std::string& path)
+{
+    if (path.empty())
+    {
+        return "The syntax of the command is incorrect.\n";
+    }
+    std::string apiPath = ToApiPath(path);
+    while (apiPath.length() > 0 && (apiPath[apiPath.length() - 1] == '\\' || apiPath[apiPath.length() - 1] == '/'))
+    {
+        apiPath.erase(apiPath.length() - 1, 1);
+    }
+    if (apiPath.empty())
+    {
+        return "";
+    }
+    std::vector<std::string> segments;
+    std::string seg;
+    for (size_t i = 0; i < apiPath.length(); i++)
+    {
+        char c = apiPath[i];
+        if (c == '\\' || c == '/')
+        {
+            if (!seg.empty())
+            {
+                segments.push_back(seg);
+                seg.clear();
+            }
+        }
+        else
+        {
+            seg += c;
+        }
+    }
+    if (!seg.empty())
+    {
+        segments.push_back(seg);
+    }
+    if (segments.empty())
+    {
+        return "";
+    }
+    std::string built = segments[0];
+    for (size_t i = 1; i < segments.size(); i++)
+    {
+        built += "\\";
+        built += segments[i];
+        if (!CreateDirectoryA(built.c_str(), NULL))
+        {
+            DWORD err = GetLastError();
+            if (err != ERROR_ALREADY_EXISTS)
+            {
+                if (err == ERROR_PATH_NOT_FOUND)
+                {
+                    return "The system cannot find the path specified.\n";
+                }
+                return "Unable to create directory.\n";
+            }
+        }
+    }
+    return "";
+}
+
+static std::string RemoveDirectoryRecursive(const std::string& apiPath)
+{
+    std::string searchPath = apiPath;
+    if (searchPath.length() > 0 && searchPath[searchPath.length() - 1] != '\\')
+    {
+        searchPath += "\\";
+    }
+    searchPath += "*";
+    WIN32_FIND_DATAA fd;
+    HANDLE h = FindFirstFileA(searchPath.c_str(), &fd);
+    if (h != INVALID_HANDLE_VALUE)
+    {
+        do
+        {
+            std::string name = fd.cFileName;
+            if (name == "." || name == "..")
+            {
+                continue;
+            }
+            std::string full = apiPath;
+            if (full.length() > 0 && full[full.length() - 1] != '\\')
+            {
+                full += "\\";
+            }
+            full += name;
+            if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
+            {
+                std::string err = RemoveDirectoryRecursive(full);
+                if (!err.empty())
+                {
+                    FindClose(h);
+                    return err;
+                }
+                if (!RemoveDirectoryA(full.c_str()))
+                {
+                    DWORD e = GetLastError();
+                    FindClose(h);
+                    if (e == ERROR_PATH_NOT_FOUND)
+                    {
+                        return "The system cannot find the path specified.\n";
+                    }
+                    return "Unable to remove directory.\n";
+                }
+            }
+            else
+            {
+                if (!DeleteFileA(full.c_str()))
+                {
+                    DWORD e = GetLastError();
+                    FindClose(h);
+                    if (e == ERROR_PATH_NOT_FOUND)
+                    {
+                        return "The system cannot find the path specified.\n";
+                    }
+                    return "Unable to delete file.\n";
+                }
+            }
+        }
+        while (FindNextFileA(h, &fd));
+        FindClose(h);
+    }
+    if (!RemoveDirectoryA(apiPath.c_str()))
+    {
+        DWORD err = GetLastError();
+        if (err == ERROR_DIR_NOT_EMPTY)
+        {
+            return "The directory is not empty.\n";
+        }
+        if (err == ERROR_PATH_NOT_FOUND)
+        {
+            return "The system cannot find the path specified.\n";
+        }
+        return "Unable to remove directory.\n";
+    }
+    return "";
+}
+
+std::string FileSystem::RemoveDirectory(const std::string& path, bool removeTree)
+{
+    if (path.empty())
+    {
+        return "The syntax of the command is incorrect.\n";
+    }
+    std::string apiPath = ToApiPath(path);
+    while (apiPath.length() > 0 && (apiPath[apiPath.length() - 1] == '\\' || apiPath[apiPath.length() - 1] == '/'))
+    {
+        apiPath.erase(apiPath.length() - 1, 1);
+    }
+    if (apiPath.empty())
+    {
+        return "The syntax of the command is incorrect.\n";
+    }
+    DWORD attrs = GetFileAttributesA(apiPath.c_str());
+    if (attrs == 0xFFFFFFFF)
+    {
+        return "The system cannot find the file specified.\n";
+    }
+    if ((attrs & FILE_ATTRIBUTE_DIRECTORY) == 0)
+    {
+        return "The directory name is invalid.\n";
+    }
+    if (removeTree)
+    {
+        return RemoveDirectoryRecursive(apiPath);
+    }
+    if (!RemoveDirectoryA(apiPath.c_str()))
+    {
+        DWORD err = GetLastError();
+        if (err == ERROR_DIR_NOT_EMPTY)
+        {
+            return "The directory is not empty.\n";
+        }
+        if (err == ERROR_PATH_NOT_FOUND)
+        {
+            return "The system cannot find the path specified.\n";
+        }
+        return "Unable to remove directory.\n";
+    }
+    return "";
 }

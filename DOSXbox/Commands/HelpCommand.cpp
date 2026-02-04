@@ -14,6 +14,8 @@ std::string HelpCommand::Execute(const std::vector<std::string>& args, CommandCo
     return "For more information on a specific command, type HELP command-name\n"
            "DIR    Displays a list of files and subdirectories in a directory.\n"
            "CD     Displays the name of or changes the current directory.\n"
+           "MD     Creates a directory (MKDIR).\n"
+           "RD     Removes a directory (RMDIR).\n"
            "CLS    Clears the screen.\n"
            "COLOR  Sets the default console foreground and background colors.\n"
            "VER    Displays the Windows version.\n"

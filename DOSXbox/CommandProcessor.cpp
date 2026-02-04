@@ -5,6 +5,8 @@
 #include "Commands\VerCommand.h"
 #include "Commands\HelpCommand.h"
 #include "Commands\DirCommand.h"
+#include "Commands\MkdirCommand.h"
+#include "Commands\RmdirCommand.h"
 #include "Commands\CdCommand.h"
 #include "Commands\ExitCommand.h"
 #include "Commands\DriveCommand.h"
@@ -92,6 +94,14 @@ std::string CommandProcessor::Execute(const std::vector<std::string>& args)
     if (DirCommand::Matches(cmd))
     {
         return DirCommand::Execute(args, ctx);
+    }
+    if (MkdirCommand::Matches(cmd))
+    {
+        return MkdirCommand::Execute(args, ctx);
+    }
+    if (RmdirCommand::Matches(cmd))
+    {
+        return RmdirCommand::Execute(args, ctx);
     }
     if (CdCommand::Matches(cmd))
     {

@@ -269,6 +269,18 @@
 					RelativePath=".\Commands\HelpCommand.h">
 				</File>
 				<File
+					RelativePath=".\Commands\MkdirCommand.cpp">
+				</File>
+				<File
+					RelativePath=".\Commands\MkdirCommand.h">
+				</File>
+				<File
+					RelativePath=".\Commands\RmdirCommand.cpp">
+				</File>
+				<File
+					RelativePath=".\Commands\RmdirCommand.h">
+				</File>
+				<File
 					RelativePath=".\Commands\VerCommand.cpp">
 				</File>
 				<File
