@@ -1,5 +1,6 @@
 #include "CommandProcessor.h"
 #include "DriveMount.h"
+#include "FileSystem.h"
 #include <algorithm>
 #include <cctype>
 
@@ -76,16 +77,33 @@ std::string CommandProcessor::Execute(const std::vector<std::string>& args)
     }
     if (cmd == "DIR")
     {
-        std::string out = " Volume in drive C has no label.\n Volume Serial Number is 0000-0000\n\n Directory of " + s_currentDir + "\n\n";
-        out += "01/01/2020  12:00 AM    <DIR>          .\n";
-        out += "01/01/2020  12:00 AM    <DIR>          ..\n";
-        out += "06/15/2020  02:30 PM            12,345 AUTOEXEC.BAT\n";
-        out += "06/15/2020  02:30 PM             8,192 COMMAND.COM\n";
-        out += "02/03/2025  10:15 AM    <DIR>          GAMES\n";
-        out += "02/03/2025  10:16 AM    <DIR>          APPS\n";
-        out += "               2 File(s)         20,537 bytes\n";
-        out += "               4 Dir(s)   1,234,567,890 bytes free\n";
-        return out;
+        std::string path = s_currentDir;
+        if (args.size() >= 2)
+        {
+            std::string arg = args[1];
+            if (arg.length() >= 2 && arg[1] == ':')
+            {
+                path = arg.substr(0, arg.find(':'));
+                if (path.length() > 0 && path[path.length() - 1] != '\\')
+                {
+                    path += "\\";
+                }
+            }
+            else if (!arg.empty() && arg != "." && arg != "..")
+            {
+                path = s_currentDir;
+                if (path.length() > 0 && path[path.length() - 1] != '\\')
+                {
+                    path += "\\";
+                }
+                path += arg;
+                if (path.length() > 0 && path[path.length() - 1] != '\\')
+                {
+                    path += "\\";
+                }
+            }
+        }
+        return FileSystem::ListDirectory(path);
     }
     if (cmd == "CD" || cmd == "CHDIR")
     {

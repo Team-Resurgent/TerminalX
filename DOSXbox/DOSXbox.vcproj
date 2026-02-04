@@ -179,6 +179,12 @@
 				RelativePath=".\External.h">
 			</File>
 			<File
+				RelativePath=".\FileSystem.cpp">
+			</File>
+			<File
+				RelativePath=".\FileSystem.h">
+			</File>
+			<File
 				RelativePath=".\InputManager.cpp">
 			</File>
 			<File
