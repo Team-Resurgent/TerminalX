@@ -80,10 +80,10 @@ static size_t s_historyIndex = 0;  /* when == size, we're at "new" line */
 static void InitTerminalBuffer()
 {
     TerminalBuffer::Clear();
-    TerminalBuffer::SetCursor(0, 0);
-    TerminalBuffer::Write("DOSXbox\n");
-    TerminalBuffer::Write("=======\n");
+    TerminalBuffer::SetCursor(0, TerminalBuffer::GetRows() - 4);
+    TerminalBuffer::Write("Welcome to Terminal-X....\n");
     TerminalBuffer::Write("Type HELP for commands.\n");
+    TerminalBuffer::Write("");
     TerminalBuffer::SetPrompt(CommandProcessor::GetCurrentDirForPrompt() + "> ");
     TerminalBuffer::SetCursor(0, TerminalBuffer::GetRows() - 1);
 }

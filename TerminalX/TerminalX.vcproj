@@ -2,7 +2,7 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="7.10"
-	Name="DOSXbox"
+	Name="TerminalX"
 	ProjectGUID="{03813F8D-2AD5-44E4-B724-44240DB90B0B}"
 	RootNamespace="CerbiosRecovery"
 	Keyword="XboxProj">
@@ -68,7 +68,7 @@
 				DontMountUD="TRUE"
 				NoLibWarn="TRUE"
 				TitleID="0x5452fffd"
-				TitleName="DOSXbox"
+				TitleName="TerminalX"
 				TitleImage="$(ProjectDir)titleimage.xpr"
 				XBEVersion="1"/>
 		</Configuration>
@@ -130,7 +130,7 @@
 				DontModifyHD="TRUE"
 				DontMountUD="TRUE"
 				TitleID="0x5452fffd"
-				TitleName="DOSXbox"
+				TitleName="TerminalX"
 				TitleImage="$(ProjectDir)titleimage.xpr"
 				XBEVersion="1"/>
 		</Configuration>

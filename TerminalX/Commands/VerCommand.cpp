@@ -11,5 +11,5 @@ std::string VerCommand::Execute(const std::vector<std::string>& args, CommandCon
 {
     (void)args;
     (void)ctx;
-    return "Microsoft Xbox Original [DOSXbox]\n";
+    return "Microsoft Xbox Original [TerminalX]\n";
 }
