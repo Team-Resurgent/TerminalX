@@ -81,7 +81,7 @@ static void InitTerminalBuffer()
 {
     TerminalBuffer::Clear();
     TerminalBuffer::SetCursor(0, TerminalBuffer::GetRows() - 4);
-    TerminalBuffer::Write("Welcome to Terminal-X....\n");
+    TerminalBuffer::Write("Welcome to TerminalX...\n");
     TerminalBuffer::Write("Type HELP for commands.\n");
     TerminalBuffer::Write("");
     TerminalBuffer::SetPrompt(CommandProcessor::GetCurrentDirForPrompt() + "> ");
@@ -278,7 +278,7 @@ bool CreateDevice()
 
 void __cdecl main()
 {
-	Debug::Print("Welcome to Xbox HD Updater\n");
+	Debug::Print("Welcome to TerminalX\n");
 
 	bool deviceCreated = CreateDevice();
 

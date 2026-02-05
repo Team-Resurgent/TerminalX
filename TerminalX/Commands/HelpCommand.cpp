@@ -26,6 +26,7 @@ std::string HelpCommand::Execute(const std::vector<std::string>& args, CommandCo
            "MOVE   Moves files and renames files and directories.\n"
            "COLOR  Sets the default console foreground and background colors.\n"
            "VER    Displays the Windows version.\n"
+           "SHUTDOWN  Shuts down or reboots the Xbox (/S /R /W).\n"
            "HELP   Provides Help information for Windows commands.\n"
            "EXIT   Quits the command interpreter.\n";
 }

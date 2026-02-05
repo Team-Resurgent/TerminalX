@@ -334,6 +334,12 @@
 				<File
 					RelativePath=".\Commands\VerCommand.h">
 				</File>
+				<File
+					RelativePath=".\Commands\ShutdownCommand.cpp">
+				</File>
+				<File
+					RelativePath=".\Commands\ShutdownCommand.h">
+				</File>
 			</Filter>
 			<Filter
 				Name="Assets"
