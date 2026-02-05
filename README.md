@@ -118,4 +118,4 @@ Paths can be relative to the current directory or use a drive: `DIR HDD0-E:\cerb
 
 ## Building
 
-Open `TerminalX.sln` in Visual Studio (with Xbox SDK), select the Xbox configuration, and build. Deploy the resulting XBE to your Xbox as required by your dashboard or recovery setup.
+Open `TerminalX.sln` in Visual Studio (with Xbox SDK), select the Xbox configuration, and build. Deploy the resulting XBE to your Xbox.
