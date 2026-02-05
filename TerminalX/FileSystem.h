@@ -50,4 +50,7 @@ public:
 
     /** Move or rename file or directory. overwrite: allow overwriting existing destination file. Returns empty or error message. */
     static std::string MovePath(const std::string& src, const std::string& dst, bool overwrite);
+
+    /** Fill outNames/outIsDir with directory entries whose names start with prefix (case-insensitive). dirPath is internal path (e.g. HDD0-E\\cerbios). Returns true if directory was listed. */
+    static bool GetPathCompletions(const std::string& dirPath, const std::string& prefix, std::vector<std::string>& outNames, std::vector<bool>& outIsDir);
 };

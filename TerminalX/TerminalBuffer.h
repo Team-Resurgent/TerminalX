@@ -41,6 +41,10 @@ public:
     static void ClearInputLine();
     /** Set the entire input line (e.g. for command history). Truncates to fit. Cursor placed at end. */
     static void SetInputLine(const std::string& s);
+    /** Cursor position within the input line (0..length). */
+    static int GetInputCursorPos();
+    /** Replace input segment [start, end) with replacement and place cursor after it. */
+    static void ReplaceInputRange(int start, int end, const std::string& replacement);
     static const std::string& GetInputLine();
     /** Move cursor left/right within the input line (for editing). */
     static void MoveInputCursorLeft();

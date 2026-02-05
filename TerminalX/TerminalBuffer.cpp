@@ -420,6 +420,46 @@ void TerminalBuffer::SetInputLine(const std::string& s)
     s_inputCursorPos = (int)s_inputLine.length();
 }
 
+int TerminalBuffer::GetInputCursorPos()
+{
+    return s_inputCursorPos;
+}
+
+void TerminalBuffer::ReplaceInputRange(int start, int end, const std::string& replacement)
+{
+    Init();
+    int cols = GetCols();
+    int promptLen = (int)s_prompt.length();
+    int maxLen = cols - promptLen;
+    if (maxLen <= 0)
+    {
+        return;
+    }
+    if (start < 0)
+    {
+        start = 0;
+    }
+    if (end > (int)s_inputLine.length())
+    {
+        end = (int)s_inputLine.length();
+    }
+    if (start > end)
+    {
+        return;
+    }
+    std::string newLine = s_inputLine.substr(0, (size_t)start) + replacement + s_inputLine.substr((size_t)end);
+    if ((int)newLine.length() > maxLen)
+    {
+        newLine = newLine.substr(0, (size_t)maxLen);
+    }
+    s_inputLine = newLine;
+    s_inputCursorPos = start + (int)replacement.length();
+    if (s_inputCursorPos > (int)s_inputLine.length())
+    {
+        s_inputCursorPos = (int)s_inputLine.length();
+    }
+}
+
 void TerminalBuffer::MoveInputCursorLeft()
 {
     if (s_inputCursorPos > 0)

@@ -304,6 +304,57 @@ std::string FileSystem::ListDirectory(const std::string& path, const DirOptions&
     return out;
 }
 
+bool FileSystem::GetPathCompletions(const std::string& dirPath, const std::string& prefix, std::vector<std::string>& outNames, std::vector<bool>& outIsDir)
+{
+    outNames.clear();
+    outIsDir.clear();
+    std::string apiPath = ToApiPath(dirPath);
+    std::string searchPath = apiPath;
+    if (searchPath.length() > 0 && searchPath[searchPath.length() - 1] != '\\')
+    {
+        searchPath += "\\";
+    }
+    searchPath += "*";
+    WIN32_FIND_DATAA fd;
+    HANDLE h = FindFirstFileA(searchPath.c_str(), &fd);
+    if (h == INVALID_HANDLE_VALUE)
+    {
+        return false;
+    }
+    do
+    {
+        std::string name = fd.cFileName;
+        if (name == "." || name == "..")
+        {
+            continue;
+        }
+        bool isDir = (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+        if (prefix.length() > name.length())
+        {
+            continue;
+        }
+        bool match = true;
+        for (size_t i = 0; i < prefix.length(); i++)
+        {
+            char a = (char)toupper((unsigned char)name[i]);
+            char b = (char)toupper((unsigned char)prefix[i]);
+            if (a != b)
+            {
+                match = false;
+                break;
+            }
+        }
+        if (match)
+        {
+            outNames.push_back(name);
+            outIsDir.push_back(isDir);
+        }
+    }
+    while (FindNextFileA(h, &fd));
+    FindClose(h);
+    return true;
+}
+
 bool FileSystem::IsDirectory(const std::string& path)
 {
     std::string apiPath = ToApiPath(path);

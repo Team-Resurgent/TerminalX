@@ -14,6 +14,8 @@
 #include "TerminalBuffer.h"
 #include "CommandProcessor.h"
 #include "DriveMount.h"
+#include "FileSystem.h"
+#include "String.h"
 #include "ssfn.h"
 
 #include <xgraphics.h>
@@ -71,11 +73,145 @@ static void WaitButton(ControllerButton controllerButton)
 #define VK_UP    0x26  /* Up arrow */
 #define VK_RIGHT 0x27  /* Right arrow */
 #define VK_DOWN  0x28  /* Down arrow */
+#define VK_TAB   0x09
 #define CURSOR_BLINK_MS 530
 #define COMMAND_HISTORY_MAX 50
 
 static std::vector<std::string> s_commandHistory;
 static size_t s_historyIndex = 0;  /* when == size, we're at "new" line */
+
+static void ResolvePathForCompletion(const std::string& pathArg, const std::string& currentDir, std::string& outPath)
+{
+    outPath = currentDir;
+    size_t colon = pathArg.find(':');
+    if (colon != std::string::npos)
+    {
+        std::string drivePart = String::ToUpper(pathArg.substr(0, colon));
+        std::string pathPart = pathArg.substr(colon + 1);
+        while (!pathPart.empty() && (pathPart[0] == '\\' || pathPart[0] == '/'))
+        {
+            pathPart.erase(0, 1);
+        }
+        if (!drivePart.empty())
+        {
+            DriveMount::Mount(drivePart.c_str());
+            outPath = drivePart + "\\";
+            if (!pathPart.empty() && pathPart != "." && pathPart != "..")
+            {
+                outPath += pathPart;
+            }
+        }
+    }
+    else if (!pathArg.empty() && pathArg != "." && pathArg != "..")
+    {
+        if (outPath.length() > 0 && outPath[outPath.length() - 1] != '\\')
+        {
+            outPath += "\\";
+        }
+        outPath += pathArg;
+    }
+    while (outPath.length() > 0 && (outPath[outPath.length() - 1] == '\\' || outPath[outPath.length() - 1] == '/'))
+    {
+        outPath.erase(outPath.length() - 1, 1);
+    }
+    if (outPath.empty() && currentDir.length() > 0)
+    {
+        outPath = currentDir;
+        while (outPath.length() > 0 && (outPath[outPath.length() - 1] == '\\' || outPath[outPath.length() - 1] == '/'))
+        {
+            outPath.erase(outPath.length() - 1, 1);
+        }
+    }
+}
+
+static bool TryPathCompletion(const std::string& line, int cursorPos, int& tokenStart, int& tokenEnd, std::string& replacement)
+{
+    if (cursorPos < 0 || cursorPos > (int)line.length())
+    {
+        return false;
+    }
+    tokenEnd = cursorPos;
+    tokenStart = cursorPos;
+    while (tokenStart > 0 && line[(size_t)(tokenStart - 1)] != ' ' && line[(size_t)(tokenStart - 1)] != '\t')
+    {
+        tokenStart--;
+    }
+    std::string token = line.substr((size_t)tokenStart, (size_t)(tokenEnd - tokenStart));
+    if (token.empty())
+    {
+        return false;
+    }
+    size_t lastSlash = token.rfind('\\');
+    std::string dirPart;
+    std::string prefix;
+    if (lastSlash == std::string::npos)
+    {
+        dirPart = "";
+        prefix = token;
+    }
+    else
+    {
+        dirPart = token.substr(0, lastSlash);
+        prefix = token.substr(lastSlash + 1);
+    }
+    std::string listPath;
+    ResolvePathForCompletion(dirPart, CommandProcessor::GetCurrentDir(), listPath);
+    std::vector<std::string> names;
+    std::vector<bool> isDir;
+    if (!FileSystem::GetPathCompletions(listPath, prefix, names, isDir))
+    {
+        return false;
+    }
+    if (names.empty())
+    {
+        return false;
+    }
+    std::string pathPrefix = (lastSlash != std::string::npos) ? (dirPart + "\\") : "";
+    if (names.size() == 1)
+    {
+        replacement = pathPrefix + names[0];
+        if (isDir[0])
+        {
+            replacement += "\\";
+        }
+        return true;
+    }
+    size_t commonLen = prefix.length();
+    for (;;)
+    {
+        bool same = true;
+        char firstCh = 0;
+        for (size_t i = 0; i < names.size(); i++)
+        {
+            if (commonLen >= names[i].length())
+            {
+                same = false;
+                break;
+            }
+            char c = (char)toupper((unsigned char)names[i][commonLen]);
+            if (firstCh == 0)
+            {
+                firstCh = c;
+            }
+            else if (c != firstCh)
+            {
+                same = false;
+                break;
+            }
+        }
+        if (!same)
+        {
+            break;
+        }
+        commonLen++;
+    }
+    if (commonLen <= prefix.length())
+    {
+        return false;
+    }
+    replacement = pathPrefix + names[0].substr(0, commonLen);
+    return true;
+}
 
 static void InitTerminalBuffer()
 {
@@ -370,6 +506,19 @@ void __cdecl main()
                 {
                     TerminalBuffer::ScrollToBottom();
                     TerminalBuffer::BackspaceInput();
+                }
+                else if ((unsigned char)keyboardState.VirtualKey == VK_TAB)
+                {
+                    TerminalBuffer::ScrollToBottom();
+                    std::string line = TerminalBuffer::GetInputLine();
+                    int cursorPos = TerminalBuffer::GetInputCursorPos();
+                    int tokenStart = 0;
+                    int tokenEnd = 0;
+                    std::string replacement;
+                    if (TryPathCompletion(line, cursorPos, tokenStart, tokenEnd, replacement))
+                    {
+                        TerminalBuffer::ReplaceInputRange(tokenStart, tokenEnd, replacement);
+                    }
                 }
                 else if (keyboardState.Ascii >= 32 && keyboardState.Ascii <= 126)
                 {
