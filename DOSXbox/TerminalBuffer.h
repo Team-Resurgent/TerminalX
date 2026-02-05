@@ -17,6 +17,8 @@ public:
     static void Clear();
     static void SetCursor(int x, int y);
     static void Write(std::string message, ...);
+    /** Write a string in full (no 1024-char limit). Use for command output (e.g. TYPE). */
+    static void WriteRaw(const std::string& s);
     static void ScrollUp();
     static const char* GetBuffer();
     static int GetCols();

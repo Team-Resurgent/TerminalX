@@ -275,6 +275,12 @@
 				RelativePath=".\Commands\TimeCommand.h">
 			</File>
 			<File
+				RelativePath=".\Commands\TypeCommand.cpp">
+			</File>
+			<File
+				RelativePath=".\Commands\TypeCommand.h">
+			</File>
+			<File
 				RelativePath=".\Commands\DelCommand.h">
 			</File>
 			<File

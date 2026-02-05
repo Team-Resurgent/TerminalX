@@ -81,7 +81,8 @@ static void InitTerminalBuffer()
 static void SubmitCommand()
 {
     std::string line = TerminalBuffer::GetInputLine();
-    if (line.empty())
+    /* Allow empty line when waiting for DATE/TIME (Press ENTER to keep the same date/time) */
+    if (line.empty() && CommandProcessor::GetPendingInputType() == CommandProcessor::PendingNone)
     {
         TerminalBuffer::UpdateInputRow();
         return;
@@ -91,6 +92,21 @@ static void SubmitCommand()
     TerminalBuffer::SetCursor(0, TerminalBuffer::GetRows() - 1);
     TerminalBuffer::ClearInputLine();
     TerminalBuffer::UpdateInputRow();
+
+    /* If we're waiting for DATE/TIME input, submit the line as the new date/time (empty = keep same) */
+    if (CommandProcessor::GetPendingInputType() != CommandProcessor::PendingNone)
+    {
+        std::string result = CommandProcessor::SubmitPendingInput(line);
+        if (!result.empty())
+        {
+            TerminalBuffer::SetCursor(0, TerminalBuffer::GetRows() - 1);
+            TerminalBuffer::WriteRaw(result);
+        }
+        TerminalBuffer::SetPrompt(CommandProcessor::GetCurrentDirForPrompt() + "> ");
+        TerminalBuffer::SetCursor(0, TerminalBuffer::GetRows() - 1);
+        TerminalBuffer::UpdateInputRow();
+        return;
+    }
 
     std::vector<std::string> args = CommandProcessor::ParseLine(line);
     std::string result = CommandProcessor::Execute(args);
@@ -103,12 +119,27 @@ static void SubmitCommand()
     {
         return;
     }
+    else if (result.length() >= 1 && result[0] == '\x03')
+    {
+        /* DATE/TIME prompt: display message after first newline (current date/time + "Enter the new ...") */
+        size_t pos = result.find('\n');
+        std::string message = (pos != std::string::npos) ? result.substr(pos + 1) : result.substr(1);
+        TerminalBuffer::SetCursor(0, TerminalBuffer::GetRows() - 1);
+        TerminalBuffer::WriteRaw(message);
+        /* Keep "Enter the new date/time" visible: set prompt so UpdateInputRow doesn't overwrite with HDD0-E:\> */
+        if (CommandProcessor::GetPendingInputType() == CommandProcessor::PendingDate)
+            TerminalBuffer::SetPrompt("Enter the new date: (yy-mm-dd) ");
+        else if (CommandProcessor::GetPendingInputType() == CommandProcessor::PendingTime)
+            TerminalBuffer::SetPrompt("Enter the new time: ");
+    }
     else if (!result.empty())
     {
         TerminalBuffer::SetCursor(0, TerminalBuffer::GetRows() - 1);
-        TerminalBuffer::Write(result);
+        TerminalBuffer::WriteRaw(result);
     }
-    TerminalBuffer::SetPrompt(CommandProcessor::GetCurrentDirForPrompt() + "> ");
+
+    if (result.empty() || result.length() < 1 || result[0] != '\x03')
+        TerminalBuffer::SetPrompt(CommandProcessor::GetCurrentDirForPrompt() + "> ");
     TerminalBuffer::SetCursor(0, TerminalBuffer::GetRows() - 1);
     TerminalBuffer::UpdateInputRow();
 }

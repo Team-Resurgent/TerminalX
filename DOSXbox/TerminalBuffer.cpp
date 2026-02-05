@@ -119,6 +119,43 @@ void TerminalBuffer::Write(std::string message, ...)
     }
 }
 
+void TerminalBuffer::WriteRaw(const std::string& s)
+{
+    Init();
+    for (size_t i = 0; i < s.size(); i++)
+    {
+        char c = s[i];
+        if (c == '\n')
+        {
+            s_cursor_x = 0;
+            s_cursor_y++;
+            if (s_cursor_y >= GetRows())
+            {
+                ScrollUp();
+                s_cursor_y = GetRows() - 1;
+            }
+            continue;
+        }
+
+        if (s_cursor_x >= GetCols())
+        {
+            s_cursor_x = 0;
+            s_cursor_y++;
+            if (s_cursor_y >= GetRows())
+            {
+                ScrollUp();
+                s_cursor_y = GetRows() - 1;
+            }
+        }
+
+        if (s_cursor_y >= 0 && s_cursor_y < GetRows() && s_cursor_x >= 0 && s_cursor_x < GetCols())
+        {
+            s_buffer[(s_cursor_y * GetCols()) + s_cursor_x] = c;
+        }
+        s_cursor_x++;
+    }
+}
+
 void TerminalBuffer::ScrollUp()
 {
     Init();

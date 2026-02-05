@@ -7,6 +7,7 @@
 #include "Commands\DelCommand.h"
 #include "Commands\EchoCommand.h"
 #include "Commands\TimeCommand.h"
+#include "Commands\TypeCommand.h"
 #include "Commands\MoveCommand.h"
 #include "Commands\VerCommand.h"
 #include "Commands\HelpCommand.h"
@@ -25,6 +26,7 @@ namespace
 {
     std::string s_currentDir = "HDD0-E\\";
     bool s_echoEnabled = true;
+    CommandProcessor::PendingInputType s_pendingInput = CommandProcessor::PendingNone;
 }
 
 static void Trim(std::string& s)
@@ -102,6 +104,10 @@ std::string CommandProcessor::Execute(const std::vector<std::string>& args)
     {
         return TimeCommand::Execute(args, ctx);
     }
+    if (TypeCommand::Matches(cmd))
+    {
+        return TypeCommand::Execute(args, ctx);
+    }
     if (DelCommand::Matches(cmd))
     {
         return DelCommand::Execute(args, ctx);
@@ -174,4 +180,29 @@ bool CommandProcessor::GetEcho()
 void CommandProcessor::SetEcho(bool on)
 {
     s_echoEnabled = on;
+}
+
+CommandProcessor::PendingInputType CommandProcessor::GetPendingInputType()
+{
+    return s_pendingInput;
+}
+
+void CommandProcessor::SetPendingInputType(PendingInputType t)
+{
+    s_pendingInput = t;
+}
+
+std::string CommandProcessor::SubmitPendingInput(const std::string& line)
+{
+    PendingInputType t = s_pendingInput;
+    s_pendingInput = PendingNone;
+    if (t == PendingDate)
+    {
+        return DateCommand::SetDateFromString(line);
+    }
+    if (t == PendingTime)
+    {
+        return TimeCommand::SetTimeFromString(line);
+    }
+    return "";
 }

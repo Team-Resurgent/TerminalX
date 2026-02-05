@@ -17,4 +17,11 @@ public:
     /** Echo state for ECHO ON/OFF (default on). Used when echoing commands. */
     static bool GetEcho();
     static void SetEcho(bool on);
+
+    /** Pending DATE/TIME prompt: next line is date or time input. */
+    enum PendingInputType { PendingNone, PendingDate, PendingTime };
+    static PendingInputType GetPendingInputType();
+    static void SetPendingInputType(PendingInputType t);
+    /** Submit line when pending (date/time). Returns message to display, clears pending. */
+    static std::string SubmitPendingInput(const std::string& line);
 };

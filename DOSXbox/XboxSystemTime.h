@@ -2,5 +2,8 @@
 
 #include <xtl.h>
 
-/** Set system time on Xbox using SYSTEMTIME (treated as local) -> UTC FILETIME -> NtSetSystemTime. Returns true on success. */
+/** Set system time on Xbox. \a st is local time; converted to UTC and passed to NtSetSystemTime. Returns true on success. */
 bool SetXboxSystemTime(const SYSTEMTIME* st);
+
+/** Get current system time in local time (UTC from system converted via FileTimeToLocalFileTime). Fills \a st. Returns false if any conversion fails. */
+bool GetXboxSystemTime(SYSTEMTIME* st);
