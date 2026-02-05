@@ -20,6 +20,7 @@ std::string HelpCommand::Execute(const std::vector<std::string>& args, CommandCo
            "COPY   Copies one or more files to another location.\n"
            "DATE   Displays or sets the date. Press ENTER to keep the same date.\n"
            "TYPE   Displays the contents of a text file or files.\n"
+           "EDIT   Opens a text file for viewing and editing. F2=Save F3=Exit.\n"
            "DEL    Deletes one or more files (ERASE).\n"
            "ECHO   Displays messages, or turns command-echoing on or off.\n"
            "TIME   Displays or sets the system time. Press ENTER to keep the same time.\n"

@@ -281,6 +281,12 @@
 				RelativePath=".\Commands\TypeCommand.h">
 			</File>
 			<File
+				RelativePath=".\Commands\EditCommand.cpp">
+			</File>
+			<File
+				RelativePath=".\Commands\EditCommand.h">
+			</File>
+			<File
 				RelativePath=".\Commands\DelCommand.h">
 			</File>
 			<File

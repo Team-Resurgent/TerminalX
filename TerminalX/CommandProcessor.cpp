@@ -19,6 +19,7 @@
 #include "Commands\DriveCommand.h"
 #include "Commands\ShutdownCommand.h"
 #include "Commands\LoginCommand.h"
+#include "Commands\EditCommand.h"
 #include "String.h"
 #include <cctype>
 #include <string>
@@ -157,6 +158,10 @@ std::string CommandProcessor::Execute(const std::vector<std::string>& args)
     if (LoginCommand::Matches(cmd))
     {
         return LoginCommand::Execute(args, ctx);
+    }
+    if (EditCommand::Matches(cmd))
+    {
+        return EditCommand::Execute(args, ctx);
     }
 
     return "Bad command or file name - " + args[0] + "\n";
