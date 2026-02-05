@@ -2,6 +2,12 @@
 #include "Commands\CommandContext.h"
 #include "Commands\ClsCommand.h"
 #include "Commands\ColorCommand.h"
+#include "Commands\CopyCommand.h"
+#include "Commands\DateCommand.h"
+#include "Commands\DelCommand.h"
+#include "Commands\EchoCommand.h"
+#include "Commands\TimeCommand.h"
+#include "Commands\MoveCommand.h"
 #include "Commands\VerCommand.h"
 #include "Commands\HelpCommand.h"
 #include "Commands\DirCommand.h"
@@ -18,6 +24,7 @@
 namespace
 {
     std::string s_currentDir = "HDD0-E\\";
+    bool s_echoEnabled = true;
 }
 
 static void Trim(std::string& s)
@@ -83,6 +90,30 @@ std::string CommandProcessor::Execute(const std::vector<std::string>& args)
     {
         return ColorCommand::Execute(args, ctx);
     }
+    if (CopyCommand::Matches(cmd))
+    {
+        return CopyCommand::Execute(args, ctx);
+    }
+    if (DateCommand::Matches(cmd))
+    {
+        return DateCommand::Execute(args, ctx);
+    }
+    if (TimeCommand::Matches(cmd))
+    {
+        return TimeCommand::Execute(args, ctx);
+    }
+    if (DelCommand::Matches(cmd))
+    {
+        return DelCommand::Execute(args, ctx);
+    }
+    if (EchoCommand::Matches(cmd))
+    {
+        return EchoCommand::Execute(args, ctx);
+    }
+    if (MoveCommand::Matches(cmd))
+    {
+        return MoveCommand::Execute(args, ctx);
+    }
     if (VerCommand::Matches(cmd))
     {
         return VerCommand::Execute(args, ctx);
@@ -118,4 +149,29 @@ std::string CommandProcessor::Execute(const std::vector<std::string>& args)
 std::string CommandProcessor::GetCurrentDir()
 {
     return s_currentDir;
+}
+
+std::string CommandProcessor::GetCurrentDirForPrompt()
+{
+    std::string path = s_currentDir;
+    size_t p = path.find('\\');
+    if (p != std::string::npos)
+    {
+        path.insert(p, ":");
+    }
+    else if (!path.empty())
+    {
+        path += ":";
+    }
+    return path;
+}
+
+bool CommandProcessor::GetEcho()
+{
+    return s_echoEnabled;
+}
+
+void CommandProcessor::SetEcho(bool on)
+{
+    s_echoEnabled = on;
 }

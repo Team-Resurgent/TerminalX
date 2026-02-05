@@ -1,4 +1,5 @@
 #include "ClsCommand.h"
+#include "..\TerminalBuffer.h"
 #include <string>
 #include <vector>
 
@@ -11,5 +12,7 @@ std::string ClsCommand::Execute(const std::vector<std::string>& args, CommandCon
 {
     (void)args;
     (void)ctx;
-    return "\x01CLS";
+    TerminalBuffer::Clear();
+    TerminalBuffer::SetCursor(0, TerminalBuffer::GetRows() - 1);
+    return "";
 }

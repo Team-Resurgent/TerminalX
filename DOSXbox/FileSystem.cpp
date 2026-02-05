@@ -30,6 +30,12 @@
 #ifndef ERROR_DIR_NOT_EMPTY
 #define ERROR_DIR_NOT_EMPTY 145
 #endif
+#ifndef ERROR_FILE_EXISTS
+#define ERROR_FILE_EXISTS 80
+#endif
+#ifndef ERROR_ACCESS_DENIED
+#define ERROR_ACCESS_DENIED 5
+#endif
 
 struct DirEntry
 {
@@ -497,4 +503,357 @@ std::string FileSystem::RemoveDir(const std::string& path, bool removeTree)
         return "Unable to remove directory.\n";
     }
     return "";
+}
+
+static std::string GetParentPath(const std::string& path)
+{
+    size_t p = path.find_last_of("\\/");
+    if (p == std::string::npos)
+    {
+        return "";
+    }
+    if (p == 0)
+    {
+        return "";
+    }
+    return path.substr(0, p);
+}
+
+std::string FileSystem::CopyPath(const std::string& src, const std::string& dst, bool overwrite)
+{
+    if (src.empty() || dst.empty())
+    {
+        return "The syntax of the command is incorrect.\n";
+    }
+    std::string srcApi = ToApiPath(src);
+    std::string dstApi = ToApiPath(dst);
+    DWORD srcAttr = GetFileAttributesA(srcApi.c_str());
+    if (srcAttr == 0xFFFFFFFF)
+    {
+        return "The system cannot find the file specified.\n";
+    }
+    if ((srcAttr & FILE_ATTRIBUTE_DIRECTORY) != 0)
+    {
+        return "The directory name is invalid.\n";
+    }
+    std::string dstParent = GetParentPath(dstApi);
+    if (!dstParent.empty())
+    {
+        std::string dstParentInternal = dstParent;
+        size_t colon = dstParentInternal.find(':');
+        if (colon != std::string::npos)
+        {
+            dstParentInternal.erase(colon, 1);
+        }
+        if (GetFileAttributesA(dstParent.c_str()) == 0xFFFFFFFF)
+        {
+            std::string err = CreateDir(dstParentInternal);
+            if (!err.empty())
+            {
+                return err;
+            }
+        }
+    }
+    if (!CopyFileA(srcApi.c_str(), dstApi.c_str(), overwrite ? FALSE : TRUE))
+    {
+        DWORD err = GetLastError();
+        if (err == ERROR_FILE_EXISTS)
+        {
+            return "File exists.\n";
+        }
+        if (err == ERROR_PATH_NOT_FOUND)
+        {
+            return "The system cannot find the path specified.\n";
+        }
+        return "Unable to copy file.\n";
+    }
+    return "";
+}
+
+std::string FileSystem::AppendFiles(const std::vector<std::string>& sources, const std::string& dest)
+{
+    if (sources.empty())
+    {
+        return "The syntax of the command is incorrect.\n";
+    }
+    std::string err = CopyPath(sources[0], dest, true);
+    if (!err.empty())
+    {
+        return err;
+    }
+    std::string destApi = ToApiPath(dest);
+    HANDLE hDest = CreateFileA(destApi.c_str(), GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (hDest == INVALID_HANDLE_VALUE)
+    {
+        return "Unable to open destination for append.\n";
+    }
+    if (SetFilePointer(hDest, 0, NULL, FILE_END) == (DWORD)-1)
+    {
+        CloseHandle(hDest);
+        return "Unable to seek destination.\n";
+    }
+    for (size_t i = 1; i < sources.size(); i++)
+    {
+        std::string srcApi = ToApiPath(sources[i]);
+        HANDLE hSrc = CreateFileA(srcApi.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+        if (hSrc == INVALID_HANDLE_VALUE)
+        {
+            CloseHandle(hDest);
+            return "The system cannot find the file specified.\n";
+        }
+        char buf[8192];
+        DWORD done = 0;
+        while (ReadFile(hSrc, buf, sizeof(buf), &done, NULL) && done > 0)
+        {
+            DWORD written = 0;
+            if (!WriteFile(hDest, buf, done, &written, NULL) || written != done)
+            {
+                CloseHandle(hSrc);
+                CloseHandle(hDest);
+                return "Unable to write destination.\n";
+            }
+        }
+        CloseHandle(hSrc);
+    }
+    CloseHandle(hDest);
+    return "";
+}
+
+std::string FileSystem::MovePath(const std::string& src, const std::string& dst, bool overwrite)
+{
+    if (src.empty() || dst.empty())
+    {
+        return "The syntax of the command is incorrect.\n";
+    }
+    std::string srcApi = ToApiPath(src);
+    std::string dstApi = ToApiPath(dst);
+    DWORD srcAttr = GetFileAttributesA(srcApi.c_str());
+    if (srcAttr == 0xFFFFFFFF)
+    {
+        return "The system cannot find the file specified.\n";
+    }
+    bool srcIsDir = (srcAttr & FILE_ATTRIBUTE_DIRECTORY) != 0;
+    DWORD dstAttr = GetFileAttributesA(dstApi.c_str());
+    bool dstExists = (dstAttr != 0xFFFFFFFF);
+    bool dstIsDir = dstExists && ((dstAttr & FILE_ATTRIBUTE_DIRECTORY) != 0);
+
+    if (dstExists)
+    {
+        if (srcIsDir)
+        {
+            if (dstIsDir)
+            {
+                return "Cannot create a file when that file already exists.\n";
+            }
+            return "The directory name is invalid.\n";
+        }
+        if (dstIsDir)
+        {
+            return "Cannot create a file when that file already exists.\n";
+            /* caller should pass dst\\filename for move-into-dir */
+        }
+        if (!overwrite)
+        {
+            return "File exists.\n";
+        }
+        if (!DeleteFileA(dstApi.c_str()))
+        {
+            DWORD err = GetLastError();
+            if (err == ERROR_ACCESS_DENIED)
+            {
+                return "Access is denied.\n";
+            }
+            return "File exists.\n";
+        }
+    }
+
+    if (!MoveFileA(srcApi.c_str(), dstApi.c_str()))
+    {
+        DWORD err = GetLastError();
+        if (err == ERROR_ALREADY_EXISTS || err == ERROR_FILE_EXISTS)
+        {
+            return "File exists.\n";
+        }
+        if (err == ERROR_PATH_NOT_FOUND)
+        {
+            return "The system cannot find the path specified.\n";
+        }
+        if (err == ERROR_ACCESS_DENIED)
+        {
+            return "Access is denied.\n";
+        }
+        return "Unable to move file.\n";
+    }
+    return "";
+}
+
+static bool WildcardMatch(const char* pattern, const char* name)
+{
+    while (*pattern && *name)
+    {
+        if (*pattern == '*')
+        {
+            pattern++;
+            if (!*pattern)
+                return true;
+            while (*name)
+            {
+                if (WildcardMatch(pattern, name))
+                    return true;
+                name++;
+            }
+            return false;
+        }
+        if (*pattern == '?' || (char)toupper((unsigned char)*pattern) == (char)toupper((unsigned char)*name))
+        {
+            pattern++;
+            name++;
+            continue;
+        }
+        return false;
+    }
+    while (*pattern == '*')
+        pattern++;
+    return (!*pattern && !*name);
+}
+
+static bool PathHasWildcards(const std::string& path)
+{
+    size_t slash = path.find_last_of("\\/");
+    std::string last = (slash != std::string::npos) ? path.substr(slash + 1) : path;
+    return (last.find('*') != std::string::npos || last.find('?') != std::string::npos);
+}
+
+static void CollectFilesInDir(const std::string& apiDir, const std::string& pattern, bool recursive, const std::string& attribFilter, std::vector<std::string>& outPaths)
+{
+    std::string searchPath = apiDir;
+    if (searchPath.length() > 0 && searchPath[searchPath.length() - 1] != '\\')
+        searchPath += "\\";
+    searchPath += "*";
+    WIN32_FIND_DATAA fd;
+    HANDLE h = FindFirstFileA(searchPath.c_str(), &fd);
+    if (h == INVALID_HANDLE_VALUE)
+        return;
+    do
+    {
+        std::string name = fd.cFileName;
+        if (name == "." || name == "..")
+            continue;
+        std::string full = apiDir;
+        if (full.length() > 0 && full[full.length() - 1] != '\\')
+            full += "\\";
+        full += name;
+        if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
+        {
+            if (recursive)
+                CollectFilesInDir(full, pattern, true, attribFilter, outPaths);
+        }
+        else
+        {
+            if (!pattern.empty() && !WildcardMatch(pattern.c_str(), name.c_str()))
+                continue;
+            DirEntry e;
+            e.name = name;
+            e.isDir = false;
+            e.attributes = fd.dwFileAttributes;
+            if (!PassesAttributeFilter(e, attribFilter))
+                continue;
+            outPaths.push_back(full);
+        }
+    }
+    while (FindNextFileA(h, &fd));
+    FindClose(h);
+}
+
+static std::string DeleteOneFile(const std::string& apiPath, bool force)
+{
+    DWORD attrs = GetFileAttributesA(apiPath.c_str());
+    if (attrs == 0xFFFFFFFF)
+        return "The system cannot find the file specified.\n";
+    if ((attrs & FILE_ATTRIBUTE_DIRECTORY) != 0)
+        return ""; /* skip directories */
+    if ((attrs & FILE_ATTRIBUTE_READONLY) != 0)
+    {
+        if (!force)
+            return "Access is denied.\n";
+        if (!SetFileAttributesA(apiPath.c_str(), attrs & ~FILE_ATTRIBUTE_READONLY))
+            return "Access is denied.\n";
+    }
+    if (!DeleteFileA(apiPath.c_str()))
+    {
+        DWORD err = GetLastError();
+        if (err == ERROR_PATH_NOT_FOUND)
+            return "The system cannot find the file specified.\n";
+        return "Access is denied.\n";
+    }
+    return "";
+}
+
+std::string FileSystem::DeletePath(const std::string& path, bool recursive, bool force, const std::string& attribFilter, bool showOnlyDeleted)
+{
+    if (path.empty())
+        return "The syntax of the command is incorrect.\n";
+    std::string apiPath = ToApiPath(path);
+    while (apiPath.length() > 0 && (apiPath[apiPath.length() - 1] == '\\' || apiPath[apiPath.length() - 1] == '/'))
+        apiPath.erase(apiPath.length() - 1, 1);
+    if (apiPath.empty())
+        return "The syntax of the command is incorrect.\n";
+
+    std::vector<std::string> toDelete;
+    if (PathHasWildcards(path))
+    {
+        std::string dirPart = GetParentPath(apiPath);
+        size_t slash = path.find_last_of("\\/");
+        std::string patternPart = (slash != std::string::npos) ? path.substr(slash + 1) : path;
+        if (dirPart.empty())
+        {
+            dirPart = apiPath;
+            patternPart = "*";
+        }
+        CollectFilesInDir(dirPart, patternPart, recursive, attribFilter, toDelete);
+    }
+    else
+    {
+        DWORD attrs = GetFileAttributesA(apiPath.c_str());
+        if (attrs == 0xFFFFFFFF)
+            return "Could Not Find " + path + "\n";
+        if ((attrs & FILE_ATTRIBUTE_DIRECTORY) != 0)
+        {
+            CollectFilesInDir(apiPath, "", recursive, attribFilter, toDelete);
+        }
+        else
+        {
+            DirEntry e;
+            e.name = path;
+            size_t p = e.name.find_last_of("\\/");
+            if (p != std::string::npos)
+                e.name = e.name.substr(p + 1);
+            e.attributes = attrs;
+            e.isDir = false;
+            if (PassesAttributeFilter(e, attribFilter))
+                toDelete.push_back(apiPath);
+        }
+    }
+
+    std::string result;
+    for (size_t i = 0; i < toDelete.size(); i++)
+    {
+        std::string err = DeleteOneFile(toDelete[i], force);
+        if (!err.empty())
+        {
+            if (result.empty() && !showOnlyDeleted)
+                result = err;
+            break;
+            /* stop on first error */
+        }
+        if (showOnlyDeleted)
+        {
+            std::string internalPath = toDelete[i];
+            size_t colon = internalPath.find(':');
+            if (colon != std::string::npos)
+                internalPath = internalPath.substr(0, colon) + internalPath.substr(colon + 1);
+            result += internalPath + "\n";
+        }
+    }
+    return result;
 }

@@ -11,5 +11,5 @@ std::string VerCommand::Execute(const std::vector<std::string>& args, CommandCon
 {
     (void)args;
     (void)ctx;
-    return "Microsoft Windows XP [Version 5.1.2600]\n(DOSXbox)\n";
+    return "Microsoft Xbox Original [DOSXbox]\n";
 }

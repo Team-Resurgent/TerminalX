@@ -74,7 +74,7 @@ static void InitTerminalBuffer()
     TerminalBuffer::Write("DOSXbox\n");
     TerminalBuffer::Write("=======\n");
     TerminalBuffer::Write("Type HELP for commands.\n");
-    TerminalBuffer::SetPrompt(CommandProcessor::GetCurrentDir() + "> ");
+    TerminalBuffer::SetPrompt(CommandProcessor::GetCurrentDirForPrompt() + "> ");
     TerminalBuffer::SetCursor(0, TerminalBuffer::GetRows() - 1);
 }
 
@@ -108,7 +108,7 @@ static void SubmitCommand()
         TerminalBuffer::SetCursor(0, TerminalBuffer::GetRows() - 1);
         TerminalBuffer::Write(result);
     }
-    TerminalBuffer::SetPrompt(CommandProcessor::GetCurrentDir() + "> ");
+    TerminalBuffer::SetPrompt(CommandProcessor::GetCurrentDirForPrompt() + "> ");
     TerminalBuffer::SetCursor(0, TerminalBuffer::GetRows() - 1);
     TerminalBuffer::UpdateInputRow();
 }

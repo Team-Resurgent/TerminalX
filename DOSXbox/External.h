@@ -109,6 +109,7 @@ extern "C" {
 		IN ULONG ShareAccess,
 		IN ULONG OpenOptions
 	);
+
     NTSTATUS WINAPI NtQueryInformationFile(
 		HANDLE FileHandle,
 		IO_STATUS_BLOCK* IoStatusBlock,
@@ -126,6 +127,8 @@ extern "C" {
 		ULONG Length,
 		PLARGE_INTEGER pByteOffset
 	);
+
+    NTSTATUS WINAPI NtSetSystemTime(PLARGE_INTEGER SystemTime, PLARGE_INTEGER PreviousTime);
 
     extern STRING* XeImageFileName;
     VOID WINAPI HalReturnToFirmware(ULONG value);

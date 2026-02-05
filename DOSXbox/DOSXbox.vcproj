@@ -179,6 +179,12 @@
 				RelativePath=".\External.h">
 			</File>
 			<File
+				RelativePath=".\XboxSystemTime.cpp">
+			</File>
+			<File
+				RelativePath=".\XboxSystemTime.h">
+			</File>
+			<File
 				RelativePath=".\FileSystem.cpp">
 			</File>
 			<File
@@ -241,9 +247,39 @@
 				<File
 					RelativePath=".\Commands\ColorCommand.h">
 				</File>
-				<File
-					RelativePath=".\Commands\CommandContext.h">
-				</File>
+			<File
+				RelativePath=".\Commands\CopyCommand.cpp">
+			</File>
+			<File
+				RelativePath=".\Commands\CopyCommand.h">
+			</File>
+			<File
+				RelativePath=".\Commands\DateCommand.cpp">
+			</File>
+			<File
+				RelativePath=".\Commands\DateCommand.h">
+			</File>
+			<File
+				RelativePath=".\Commands\DelCommand.cpp">
+			</File>
+			<File
+				RelativePath=".\Commands\EchoCommand.cpp">
+			</File>
+			<File
+				RelativePath=".\Commands\EchoCommand.h">
+			</File>
+			<File
+				RelativePath=".\Commands\TimeCommand.cpp">
+			</File>
+			<File
+				RelativePath=".\Commands\TimeCommand.h">
+			</File>
+			<File
+				RelativePath=".\Commands\DelCommand.h">
+			</File>
+			<File
+				RelativePath=".\Commands\CommandContext.h">
+			</File>
 				<File
 					RelativePath=".\Commands\DirCommand.cpp">
 				</File>
@@ -268,9 +304,15 @@
 				<File
 					RelativePath=".\Commands\HelpCommand.h">
 				</File>
-				<File
-					RelativePath=".\Commands\MkdirCommand.cpp">
-				</File>
+			<File
+				RelativePath=".\Commands\MoveCommand.cpp">
+			</File>
+			<File
+				RelativePath=".\Commands\MoveCommand.h">
+			</File>
+			<File
+				RelativePath=".\Commands\MkdirCommand.cpp">
+			</File>
 				<File
 					RelativePath=".\Commands\MkdirCommand.h">
 				</File>
