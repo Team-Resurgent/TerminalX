@@ -20,6 +20,7 @@ Use these names with the colon when switching drives (e.g. `HDD0-E:`) or in path
 
 | Format | Example | Description |
 |--------|---------|-------------|
+| **DVD-ROM** | `DVD-ROM:` | Optical drive (CD/DVD). |
 | **HDD0-**letter | `HDD0-E:`, `HDD0-F:`, `HDD0-X:` | First hard disk partitions. Letters: **C**, **E**, **F**, **G**, **H**, **I**, **J**, **K**, **L**, **M**, **N**, **X**, **Y**, **Z**. |
 | **HDD1-**letter | `HDD1-E:`, `HDD1-F:` | Second hard disk (same letter set as HDD0). |
 | **MMU0**–**MMU7** | `MMU0:`, `MMU3:` | Memory units (MU) in ports 0–7. |
