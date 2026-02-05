@@ -340,6 +340,12 @@
 				<File
 					RelativePath=".\Commands\ShutdownCommand.h">
 				</File>
+				<File
+					RelativePath=".\Commands\LoginCommand.cpp">
+				</File>
+				<File
+					RelativePath=".\Commands\LoginCommand.h">
+				</File>
 			</Filter>
 			<Filter
 				Name="Assets"
