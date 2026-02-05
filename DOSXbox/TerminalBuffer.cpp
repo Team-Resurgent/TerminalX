@@ -4,10 +4,18 @@
 namespace
 {
     char* s_buffer = NULL;
+    char* s_baseBuffer = NULL;
+    char* s_scrollback = NULL;
+    int s_allocRows = 0;
+    int s_allocCols = 0;
     int s_cursor_x = 0;
     int s_cursor_y = 0;
+    int s_scrollbackCount = 0;
+    int s_scrollbackStart = 0;
+    int s_scrollOffset = 0;
     std::string s_prompt = "C:\\> ";
     std::string s_inputLine;
+    int s_inputCursorPos = 0;  /* position within input line (0..length) */
     unsigned char s_colorAttr = 0x0A;
     unsigned char s_colorAttrDefault = 0x0A;
 
@@ -47,26 +55,49 @@ unsigned int TerminalBuffer::GetBackgroundColor()
 
 void TerminalBuffer::Init()
 {
-    if (s_buffer != NULL)
+    int rows = GetRows();
+    int cols = GetCols();
+    if (rows <= 0 || cols <= 0)
     {
         return;
     }
-    s_buffer = (char*)malloc(GetRows() * GetCols());
+    if (s_buffer != NULL && s_allocRows == rows && s_allocCols == cols)
+    {
+        return;
+    }
+    if (s_buffer != NULL)
+    {
+        free(s_buffer);
+        free(s_baseBuffer);
+        free(s_scrollback);
+    }
+    s_allocRows = rows;
+    s_allocCols = cols;
+    s_buffer = (char*)malloc((size_t)(rows * cols));
+    s_baseBuffer = (char*)malloc((size_t)(rows * cols));
+    s_scrollback = (char*)malloc((size_t)(TERMINAL_SCROLLBACK_MAX_ROWS * TERMINAL_MAX_COLS));
+    s_scrollbackCount = 0;
+    s_scrollbackStart = 0;
+    s_scrollOffset = 0;
 }
 
 void TerminalBuffer::Clear()
 {
     Init();
-
-    for (int row = 0; row < GetRows(); row++)
+    int rows = GetRows();
+    int cols = GetCols();
+    for (int row = 0; row < rows; row++)
     {
-        for (int col = 0; col < GetCols(); col++)
+        for (int col = 0; col < cols; col++)
         {
-            s_buffer[(row * GetCols()) + col] = ' ';
+            s_baseBuffer[(row * cols) + col] = ' ';
         }
     }
     s_cursor_x = 0;
     s_cursor_y = 0;
+    s_scrollbackCount = 0;
+    s_scrollbackStart = 0;
+    s_scrollOffset = 0;
 }
 
 void TerminalBuffer::SetCursor(int x, int y)
@@ -113,7 +144,7 @@ void TerminalBuffer::Write(std::string message, ...)
 
         if (s_cursor_y >= 0 && s_cursor_y < GetRows() && s_cursor_x >= 0 && s_cursor_x < GetCols())
         {
-            s_buffer[(s_cursor_y * GetCols()) + s_cursor_x] = *p;
+            s_baseBuffer[(s_cursor_y * GetCols()) + s_cursor_x] = *p;
         }
         s_cursor_x++;
     }
@@ -150,7 +181,7 @@ void TerminalBuffer::WriteRaw(const std::string& s)
 
         if (s_cursor_y >= 0 && s_cursor_y < GetRows() && s_cursor_x >= 0 && s_cursor_x < GetCols())
         {
-            s_buffer[(s_cursor_y * GetCols()) + s_cursor_x] = c;
+            s_baseBuffer[(s_cursor_y * GetCols()) + s_cursor_x] = c;
         }
         s_cursor_x++;
     }
@@ -159,22 +190,142 @@ void TerminalBuffer::WriteRaw(const std::string& s)
 void TerminalBuffer::ScrollUp()
 {
     Init();
-
-    for (int row = 0; row < GetRows() - 1; row++)
+    int rows = GetRows();
+    int cols = GetCols();
+    if (rows == 0 || cols == 0)
     {
-        for (int col = 0; col < GetCols(); col++)
+        return;
+    }
+    /* Push top row of base buffer into scrollback ring */
+    int cap = TERMINAL_SCROLLBACK_MAX_ROWS;
+    int phys = (s_scrollbackStart + s_scrollbackCount) % cap;
+    int copyCols = (cols < TERMINAL_MAX_COLS) ? cols : TERMINAL_MAX_COLS;
+    for (int col = 0; col < copyCols; col++)
+    {
+        s_scrollback[phys * TERMINAL_MAX_COLS + col] = s_baseBuffer[0 * cols + col];
+    }
+    for (int col = copyCols; col < TERMINAL_MAX_COLS; col++)
+    {
+        s_scrollback[phys * TERMINAL_MAX_COLS + col] = ' ';
+    }
+    if (s_scrollbackCount >= cap)
+    {
+        s_scrollbackStart = (s_scrollbackStart + 1) % cap;
+    }
+    else
+    {
+        s_scrollbackCount++;
+    }
+    /* Shift base buffer up */
+    for (int row = 0; row < rows - 1; row++)
+    {
+        for (int col = 0; col < cols; col++)
         {
-            s_buffer[(row * GetCols()) + col] = s_buffer[((row + 1) * GetCols()) + col];
+            s_baseBuffer[(row * cols) + col] = s_baseBuffer[((row + 1) * cols) + col];
         }
     }
-    for (int col = 0; col < GetCols(); col++)
+    for (int col = 0; col < cols; col++)
     {
-        s_buffer[((GetRows() - 1) * GetCols()) + col] = ' ';
+        s_baseBuffer[((rows - 1) * cols) + col] = ' ';
+    }
+}
+
+void TerminalBuffer::ScrollPageUp()
+{
+    Init();
+    int pageRows = GetRows() - 1;
+    if (pageRows <= 0)
+    {
+        return;
+    }
+    int maxOffset = s_scrollbackCount;
+    s_scrollOffset += pageRows;
+    if (s_scrollOffset > maxOffset)
+    {
+        s_scrollOffset = maxOffset;
+    }
+}
+
+void TerminalBuffer::ScrollPageDown()
+{
+    int pageRows = GetRows() - 1;
+    if (pageRows <= 0)
+    {
+        return;
+    }
+    s_scrollOffset -= pageRows;
+    if (s_scrollOffset < 0)
+    {
+        s_scrollOffset = 0;
+    }
+}
+
+void TerminalBuffer::ScrollToBottom()
+{
+    s_scrollOffset = 0;
+}
+
+static void RefreshViewBuffer()
+{
+    int rows = TerminalBuffer::GetRows();
+    int cols = TerminalBuffer::GetCols();
+    if (s_scrollOffset == 0)
+    {
+        for (int i = 0; i < rows * cols; i++)
+        {
+            s_buffer[i] = s_baseBuffer[i];
+        }
+        return;
+    }
+    int cap = TERMINAL_SCROLLBACK_MAX_ROWS;
+    /* Top scrollOffset rows from scrollback (newest first) */
+    for (int r = 0; r < s_scrollOffset && r < rows; r++)
+    {
+        int logical = s_scrollbackCount - s_scrollOffset + r;
+        if (logical < 0)
+        {
+            for (int col = 0; col < cols; col++)
+            {
+                s_buffer[(r * cols) + col] = ' ';
+            }
+        }
+        else
+        {
+            int phys = (s_scrollbackStart + logical) % cap;
+            int copyCols = (cols < TERMINAL_MAX_COLS) ? cols : TERMINAL_MAX_COLS;
+            for (int col = 0; col < copyCols; col++)
+            {
+                s_buffer[(r * cols) + col] = s_scrollback[phys * TERMINAL_MAX_COLS + col];
+            }
+            for (int col = copyCols; col < cols; col++)
+            {
+                s_buffer[(r * cols) + col] = ' ';
+            }
+        }
+    }
+    /* Content rows from base buffer (rows 0..rows-2), then input row (rows-1) */
+    int contentFromBase = rows - 1 - s_scrollOffset;
+    if (contentFromBase > 0)
+    {
+        for (int r = 0; r < contentFromBase; r++)
+        {
+            for (int col = 0; col < cols; col++)
+            {
+                s_buffer[(s_scrollOffset + r) * cols + col] = s_baseBuffer[r * cols + col];
+            }
+        }
+    }
+    /* Last row is always the input row from base buffer */
+    for (int col = 0; col < cols; col++)
+    {
+        s_buffer[(rows - 1) * cols + col] = s_baseBuffer[(rows - 1) * cols + col];
     }
 }
 
 const char* TerminalBuffer::GetBuffer()
 {
+    Init();
+    RefreshViewBuffer();
     return s_buffer;
 }
 
@@ -211,23 +362,78 @@ const std::string& TerminalBuffer::GetPrompt()
 void TerminalBuffer::AppendInputChar(char c)
 {
     if (c < 32 || c > 126)
+    {
         return;
+    }
     int cols = GetCols();
     int promptLen = (int)s_prompt.length();
     if ((int)s_inputLine.length() + promptLen >= cols)
+    {
         return;
-    s_inputLine += c;
+    }
+    if (s_inputCursorPos >= (int)s_inputLine.length())
+    {
+        s_inputLine += c;
+        s_inputCursorPos = (int)s_inputLine.length();
+    }
+    else
+    {
+        s_inputLine.insert((size_t)s_inputCursorPos, 1, c);
+        s_inputCursorPos++;
+    }
 }
 
 void TerminalBuffer::BackspaceInput()
 {
-    if (!s_inputLine.empty())
-        s_inputLine.erase(s_inputLine.length() - 1, 1);
+    if (s_inputCursorPos > 0 && s_inputCursorPos <= (int)s_inputLine.length())
+    {
+        s_inputLine.erase((size_t)(s_inputCursorPos - 1), 1);
+        s_inputCursorPos--;
+    }
 }
 
 void TerminalBuffer::ClearInputLine()
 {
     s_inputLine.clear();
+    s_inputCursorPos = 0;
+}
+
+void TerminalBuffer::SetInputLine(const std::string& s)
+{
+    Init();
+    int cols = GetCols();
+    int promptLen = (int)s_prompt.length();
+    int maxLen = cols - promptLen;
+    if (maxLen <= 0)
+    {
+        s_inputLine.clear();
+        return;
+    }
+    if ((int)s.length() <= maxLen)
+    {
+        s_inputLine = s;
+    }
+    else
+    {
+        s_inputLine = s.substr(0, (size_t)maxLen);
+    }
+    s_inputCursorPos = (int)s_inputLine.length();
+}
+
+void TerminalBuffer::MoveInputCursorLeft()
+{
+    if (s_inputCursorPos > 0)
+    {
+        s_inputCursorPos--;
+    }
+}
+
+void TerminalBuffer::MoveInputCursorRight()
+{
+    if (s_inputCursorPos < (int)s_inputLine.length())
+    {
+        s_inputCursorPos++;
+    }
 }
 
 const std::string& TerminalBuffer::GetInputLine()
@@ -241,19 +447,21 @@ void TerminalBuffer::UpdateInputRow()
     int rows = GetRows();
     int cols = GetCols();
     if (rows == 0)
+    {
         return;
+    }
     int inputRow = rows - 1;
     std::string line = s_prompt + s_inputLine;
     for (int col = 0; col < cols; col++)
     {
         char ch = (col < (int)line.length()) ? line[col] : ' ';
-        s_buffer[(inputRow * cols) + col] = ch;
+        s_baseBuffer[(inputRow * cols) + col] = ch;
     }
 }
 
 int TerminalBuffer::GetInputCursorX()
 {
-    return (int)(s_prompt.length() + s_inputLine.length());
+    return (int)s_prompt.length() + s_inputCursorPos;
 }
 
 int TerminalBuffer::GetInputCursorY()

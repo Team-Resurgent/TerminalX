@@ -9,6 +9,8 @@
 #define TERMINAL_MAX_COLS 255
 #define TERMINAL_MAX_ROWS 255
 #define TERMINAL_MAX_VERTS (TERMINAL_MAX_ROWS * TERMINAL_MAX_COLS * 6)
+/** Max scrollback lines (for TYPE 64K and Page Up/Down) */
+#define TERMINAL_SCROLLBACK_MAX_ROWS 1024
 
 class TerminalBuffer
 {
@@ -20,6 +22,11 @@ public:
     /** Write a string in full (no 1024-char limit). Use for command output (e.g. TYPE). */
     static void WriteRaw(const std::string& s);
     static void ScrollUp();
+    /** Page Up / Page Down scrollback. Call when user presses those keys. */
+    static void ScrollPageUp();
+    static void ScrollPageDown();
+    /** Scroll to bottom (e.g. when user starts typing). */
+    static void ScrollToBottom();
     static const char* GetBuffer();
     static int GetCols();
     static int GetRows();
@@ -32,7 +39,12 @@ public:
     static void AppendInputChar(char c);
     static void BackspaceInput();
     static void ClearInputLine();
+    /** Set the entire input line (e.g. for command history). Truncates to fit. Cursor placed at end. */
+    static void SetInputLine(const std::string& s);
     static const std::string& GetInputLine();
+    /** Move cursor left/right within the input line (for editing). */
+    static void MoveInputCursorLeft();
+    static void MoveInputCursorRight();
     static void UpdateInputRow();
     static int GetInputCursorX();
     static int GetInputCursorY();

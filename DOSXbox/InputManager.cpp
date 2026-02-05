@@ -398,9 +398,12 @@ void InputManager::ProcessKeyboard()
             continue;
         const bool keyUp = (currentKeyStroke.Flags & XINPUT_DEBUG_KEYSTROKE_FLAG_KEYUP) != 0;
         const bool repeat = (currentKeyStroke.Flags & XINPUT_DEBUG_KEYSTROKE_FLAG_REPEAT) != 0;
-        const bool validKey = currentKeyStroke.Ascii != 0 && currentKeyStroke.VirtualKey != 0;
+        /* Allow keys with only VirtualKey (e.g. Page Up/Down have Ascii 0) */
+        const bool validKey = (currentKeyStroke.VirtualKey != 0);
         if (keyUp || repeat || !validKey)
+        {
             continue;
+        }
         mKeyboardState.KeyDown = true;
         mKeyboardState.Ascii = currentKeyStroke.Ascii;
         mKeyboardState.VirtualKey = currentKeyStroke.VirtualKey;

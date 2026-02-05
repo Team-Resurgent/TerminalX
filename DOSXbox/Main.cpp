@@ -64,8 +64,18 @@ static void WaitButton(ControllerButton controllerButton)
 	}
 }
 
-#define VK_BACK 0x08
+#define VK_BACK  0x08
+#define VK_PRIOR 0x21  /* Page Up */
+#define VK_NEXT  0x22  /* Page Down */
+#define VK_LEFT  0x25  /* Left arrow */
+#define VK_UP    0x26  /* Up arrow */
+#define VK_RIGHT 0x27  /* Right arrow */
+#define VK_DOWN  0x28  /* Down arrow */
 #define CURSOR_BLINK_MS 530
+#define COMMAND_HISTORY_MAX 50
+
+static std::vector<std::string> s_commandHistory;
+static size_t s_historyIndex = 0;  /* when == size, we're at "new" line */
 
 static void InitTerminalBuffer()
 {
@@ -86,6 +96,19 @@ static void SubmitCommand()
     {
         TerminalBuffer::UpdateInputRow();
         return;
+    }
+    /* Add non-empty command to history (skip if same as last) */
+    if (!line.empty())
+    {
+        if (s_commandHistory.empty() || s_commandHistory.back() != line)
+        {
+            s_commandHistory.push_back(line);
+            if (s_commandHistory.size() > (size_t)COMMAND_HISTORY_MAX)
+            {
+                s_commandHistory.erase(s_commandHistory.begin());
+            }
+        }
+        s_historyIndex = s_commandHistory.size();
     }
     /* Scroll so current line (prompt+command) becomes history */
     TerminalBuffer::ScrollUp();
@@ -291,12 +314,66 @@ void __cdecl main()
                             exitRequested = true;
                     }
                 }
-                else if (keyboardState.VirtualKey == VK_BACK)
+                else if ((unsigned char)keyboardState.VirtualKey == VK_PRIOR)
                 {
+                    TerminalBuffer::ScrollPageUp();
+                }
+                else if ((unsigned char)keyboardState.VirtualKey == VK_NEXT)
+                {
+                    TerminalBuffer::ScrollPageDown();
+                }
+                else if ((unsigned char)keyboardState.VirtualKey == VK_UP)
+                {
+                    TerminalBuffer::ScrollToBottom();
+                    if (!s_commandHistory.empty())
+                    {
+                        if (s_historyIndex > 0)
+                        {
+                            s_historyIndex--;
+                            TerminalBuffer::SetInputLine(s_commandHistory[s_historyIndex]);
+                        }
+                        else if (s_historyIndex == s_commandHistory.size())
+                        {
+                            s_historyIndex = s_commandHistory.size() - 1;
+                            TerminalBuffer::SetInputLine(s_commandHistory[s_historyIndex]);
+                        }
+                    }
+                }
+                else if ((unsigned char)keyboardState.VirtualKey == VK_LEFT)
+                {
+                    TerminalBuffer::ScrollToBottom();
+                    TerminalBuffer::MoveInputCursorLeft();
+                }
+                else if ((unsigned char)keyboardState.VirtualKey == VK_RIGHT)
+                {
+                    TerminalBuffer::ScrollToBottom();
+                    TerminalBuffer::MoveInputCursorRight();
+                }
+                else if ((unsigned char)keyboardState.VirtualKey == VK_DOWN)
+                {
+                    TerminalBuffer::ScrollToBottom();
+                    if (!s_commandHistory.empty())
+                    {
+                        if (s_historyIndex < s_commandHistory.size() - 1)
+                        {
+                            s_historyIndex++;
+                            TerminalBuffer::SetInputLine(s_commandHistory[s_historyIndex]);
+                        }
+                        else
+                        {
+                            s_historyIndex = s_commandHistory.size();
+                            TerminalBuffer::ClearInputLine();
+                        }
+                    }
+                }
+                else if ((unsigned char)keyboardState.VirtualKey == VK_BACK || keyboardState.Ascii == '\x08')
+                {
+                    TerminalBuffer::ScrollToBottom();
                     TerminalBuffer::BackspaceInput();
                 }
                 else if (keyboardState.Ascii >= 32 && keyboardState.Ascii <= 126)
                 {
+                    TerminalBuffer::ScrollToBottom();
                     TerminalBuffer::AppendInputChar((char)keyboardState.Ascii);
                 }
             }
